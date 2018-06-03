@@ -29,21 +29,11 @@ import ContextMenu from './dummy/context_menu';
 import Input from './dummy/input';
 import Select from './dummy/select';
 
-function is_container(brick) {
-  return brick.type === 'container';
-}
-function is_procedure_def(brick) {
-  return brick.type === 'procedure_def';
-}
-function is_procedure(brick) {
-  return brick.type === 'procedure';
-}
-function is_procedure_with_output(brick) {
-  return brick.type === 'procedure_with_output';
-}
-function is_procedure_return(brick) {
-  return brick.type === 'procedure_return';
-}
+const is_container = (brick) => brick.type === 'container';
+const is_procedure_def = (brick) => brick.type === 'procedure_def';
+const is_procedure = (brick) => brick.type === 'procedure';
+const is_procedure_with_output = (brick) => brick.type === 'procedure_with_output';
+const is_procedure_return = (brick) => brick.type === 'procedure_return';
 type Props = {
   root_bricks: Brick[],
   toolbox: {
@@ -750,7 +740,3 @@ function root_brick_to_brick_component(workspace: Workspace, root_brick) {
   };
   return init_brick_instance(root_brick);
 }
-
-const store = (root_bricks: Brick[]) => {
-
-};
