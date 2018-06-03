@@ -247,7 +247,7 @@ export default class Workspace extends React.Component<Props, State> {
   }
 
   brick_on_context_menu = (e: BrickDragEvent) => {
-    const id = get_ancestor(this.brick_id_to_data, this.brick_id_to_data[e.id]).id;
+    const id = this.active_brick_id;
     this.mask_data = {
       visibility: true,
       brick_id: id,

@@ -56,19 +56,21 @@ const toolbox = {
   categories: init_categories(map_child(categories, 'bricks')),
   activeCategory: 'data',
 };
-console.log(toolbox);
 
 const storage_key = 'root_bricks';
 const save = (bricks: Brick[]) => {
   localStorage.setItem(storage_key, JSON.stringify(bricks));
 };
 const load = () => JSON.parse(localStorage.getItem(storage_key) || '[]');
+const root_bricks = load();
+console.log(toolbox);
+console.log(root_bricks);
 ReactDOM.render(
   <Workspace
-    root_bricks={load()}
+    root_bricks={root_bricks}
     atomic_button_fns={flatten(map_child(categories, 'atomic_button_fns'))}
     atomic_dropdown_menu={flatten(map_child(categories, 'atomic_dropdown_menu'))}
     toolbox={toolbox}
-    workspace_on_change={(root_bricks: Brick[]) => save(root_bricks)}
+    workspace_on_change={(bricks: Brick[]) => save(bricks)}
   />,
   document.getElementById('main'));
