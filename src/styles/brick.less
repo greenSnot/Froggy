@@ -1,0 +1,213 @@
+@green: #2ecc71;
+@green-dark: #15B358;
+@blue: #55acee;
+@blue-dark: #3C93D5;
+@red: #e74c3c;
+@red-dark: #CE3323;
+@purple: #9b59b6;
+@purple-dark: #82409D;
+@orange: #e67e22;
+@orange-dark: #CD6509;
+@yellow: #f1c40f;
+@yellow-dark: #D8AB00;
+
+.brickly > .wrap {
+  position: absolute;
+}
+
+.wrap.active {
+  z-index: 11;
+}
+
+.wrap {
+  display: block;
+  position: relative;
+  width: fit-content;
+}
+
+.inputs {
+  cursor: -webkit-grab;
+  display: inline-flex;
+  justify-content: start;
+  align-items: center;
+  padding: 5px 10px 5px 10px;
+  color: #fff;
+  min-height: 10px;
+  box-sizing: border-box;
+}
+
+.parts {
+  position: relative;
+}
+
+@parts-indent: 15px;
+.parts > .wrap > .next {
+  margin-left: @parts-indent;
+}
+.parts:before {
+  content: '';
+  position: absolute;
+  right: calc(100%);
+  top: -1px;
+  height: calc(100%);
+  width: @parts-indent / 3;
+  box-sizing: border-box;
+  box-shadow: 0px 6px 0px 0px rgba(0, 0, 0, 0.3);
+  background: #d4d3d3;
+}
+
+.next {
+}
+
+.hat {
+  width: 50px;
+  height: 10px;
+  background-color: inherit;
+  border: inherit;
+  bottom: 100%;
+  position: absolute;
+}
+
+.container {
+  border: 1px solid #fff;
+  border-radius: 40px;
+  display: flex!important;
+  min-width: 10px;
+  min-height: 20px;
+  box-shadow: inset 0px 5px 0px 0px rgba(0, 0, 0, 0.2);
+  margin: 0 5px 0 5px !important;
+}
+.inputs > .container:first-child {
+  margin-left: 0 !important;
+}
+.inputs > .container:last-child {
+  margin-right: 0 !important;
+}
+.container > .inputs {
+  padding: 0!important;
+  border: 0!important;
+}
+.container > .inputs .wrap {
+  display: flex;
+}
+.number {
+  border-radius: 40px;
+  background-color: @blue;
+  min-width: 30px;
+  min-height: 20px;
+}
+.brickly > .number, .toolboxBricks > .number {
+  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
+}
+
+.void {
+  border: 0;
+}
+.void > .inputs {
+  min-width: 50px;
+  background-color: @green;
+  box-shadow: 0px 5px 0px 0px @green-dark;
+  border-bottom: 1px solid rgba(0,0,0, 0.1);
+}
+
+.boolean {
+  border-radius: 40px;
+  background-color: @yellow;
+  min-width: 30px;
+  min-height: 20px;
+}
+.brickly > .boolean, .toolboxBricks > .boolean {
+  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
+}
+
+.array {
+  border-radius: 40px;
+  background-color: @orange;
+  min-width: 30px;
+  min-height: 20px;
+}
+.brickly > .array, .toolboxBricks > .array {
+  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
+}
+
+.string {
+  border-radius: 40px;
+  background-color: @purple;
+  min-width: 30px;
+  min-height: 20px;
+}
+.brickly > .string, .toolboxBricks > .string {
+  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
+}
+.any {
+  border-radius: 40px;
+  background-color: @green;
+  min-width: 30px;
+  min-height: 20px;
+}
+.brickly > .any, .toolboxBricks > .any {
+  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
+}
+.array > .inputs, .any > .inputs, .string > .inputs, .number > .inputs, .boolean > .inputs {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.ghost > .inputs {
+  opacity: 0.5;
+}
+
+.atomicText, .atomicParam {
+  white-space: nowrap;
+}
+.atomicTextIndent {
+  display: inline-block;
+}
+.atomicParam {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  display: inline-flex;
+  color: #fff;
+  justify-content: center;
+  align-items: center;
+}
+
+.atomicButtonWrap {
+  position: relative;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.atomicButtonAdd, .atomicButtonRemove {
+  border-radius: 100%;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #fff;
+  position: relative;
+  box-sizing: border-box;
+}
+.atomicButtonRemove {
+  margin-left: 3px;
+}
+.atomicButtonAdd:before, .atomicButtonAdd:after, .atomicButtonRemove:after {
+  content: '';
+  width: 6px;
+  height: 1px;
+  background: #fff;
+  display: inline-block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+}
+.atomicButtonAdd:before {
+  transform: translateX(-50%) translateY(-50%) rotate(90deg) ;
+}
+
+.removing {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
