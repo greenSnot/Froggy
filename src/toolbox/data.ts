@@ -40,6 +40,7 @@ const bricks: Brick[] = [
   {
     type: 'data_variable_declare_local',
     is_root: true,
+    next: null,
     inputs: [{
       type: 'atomic_text',
       ui: {
@@ -84,6 +85,7 @@ const bricks: Brick[] = [
   },
   {
     type: 'data_variable_set',
+    next: null,
     is_root: true,
     inputs: [{
       type: 'atomic_text',
@@ -115,6 +117,7 @@ const bricks: Brick[] = [
   },
   {
     type: 'data_variable_append',
+    next: null,
     is_root: true,
     inputs: [{
       type: 'atomic_text',
@@ -184,6 +187,7 @@ const bricks: Brick[] = [
   },
   {
     type: 'data_variable_remove_nth',
+    next: null,
     is_root: true,
     inputs: [{
       type: 'atomic_text',
@@ -221,6 +225,7 @@ const bricks: Brick[] = [
   },
   {
     type: 'data_variable_set_nth',
+    next: null,
     is_root: true,
     inputs: [{
       type: 'atomic_text',
