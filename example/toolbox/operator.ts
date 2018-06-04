@@ -1,4 +1,4 @@
-import { Brick, BrickOutput } from '../brick';
+import { Brick, BrickOutput } from '../../src/brick';
 
 const bricks: Brick[] = [
   {

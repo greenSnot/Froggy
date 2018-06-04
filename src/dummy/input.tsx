@@ -61,6 +61,7 @@ export default class Input extends React.Component<Props, State> {
         this.props.show(mask_content(), () => {
           this.input_ref.current.focus();
           this.input_ref.current.value = this.props.value;
+          this.input_ref.current.style.width = `${this.ref.current.clientWidth}px`;
         });
       }}
     >{this.props.value}</div>;

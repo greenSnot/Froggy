@@ -9,11 +9,11 @@ import Workspace from '../src/workspace';
 import { clone, for_each_brick, Brick, BrickOutput } from '../src/brick';
 import { gen_id } from '../src/util';
 
-import control from '../src/toolbox/control';
-import data from '../src/toolbox/data';
-import event from '../src/toolbox/event';
-import operator from '../src/toolbox/operator';
-import procedure from '../src/toolbox/procedure';
+import control from './toolbox/control';
+import data from './toolbox/data';
+import event from './toolbox/event';
+import operator from './toolbox/operator';
+import procedure from './toolbox/procedure';
 
 const categories = {
   control,
