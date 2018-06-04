@@ -35,6 +35,7 @@ const is_procedure = (brick) => brick.type === 'procedure';
 const is_procedure_with_output = (brick) => brick.type === 'procedure_with_output';
 const is_procedure_return = (brick) => brick.type === 'procedure_return';
 type Props = {
+  id: string,
   root_bricks: Brick[],
   toolbox: {
     categories: {[name: string]: Brick[]},
@@ -114,6 +115,11 @@ export default class Workspace extends React.Component<Props, State> {
   }
   componentDidMount() {
     this.global_offset = get_global_offset(this.brickly_wrap_ref.current);
+    this.brickly_wrap_ref.current.addEventListener('touchmove', (e) => {
+      if (e.target.className !== styles.toolboxBricks) {
+        e.preventDefault();
+      }
+    });
   }
   componentWillMount() {
     this.root_bricks = this.props.root_bricks;
@@ -326,10 +332,13 @@ export default class Workspace extends React.Component<Props, State> {
     }
     const workspace_data = this.workspace_drag_start_data;
     this.brickly_offset = {
-      x: workspace_data.workspace_global_x + e.pageX - workspace_data.mouse_global_x,
-      y: workspace_data.workspace_global_y + e.pageY - workspace_data.mouse_global_y,
+      x: Math.round(workspace_data.workspace_global_x + e.pageX - workspace_data.mouse_global_x),
+      y: Math.round(workspace_data.workspace_global_y + e.pageY - workspace_data.mouse_global_y),
     };
-    this.update();
+    this.toolbox_ref.current.style.left = `${- this.brickly_offset.x}px`;
+    this.toolbox_ref.current.style.top = `${- this.brickly_offset.y}px`;
+    this.brickly_ref.current.style.left = `${this.brickly_offset.x}px`;
+    this.brickly_ref.current.style.top = `${this.brickly_offset.y}px`;
   }
   workspace_on_drag_end = (e) => {
     this.workspace_is_mouse_down = false;
@@ -608,6 +617,7 @@ export default class Workspace extends React.Component<Props, State> {
   render() {
     return <div
       ref={this.brickly_wrap_ref}
+      key={this.props.id}
       className={styles.bricklyWrap}
       onMouseDown={this.on_mouse_down_middleware}
       onTouchStart={this.on_mouse_down_middleware}

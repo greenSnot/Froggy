@@ -67,6 +67,7 @@ console.log(toolbox);
 console.log(root_bricks);
 ReactDOM.render(
   <Workspace
+    id="a"
     root_bricks={root_bricks}
     atomic_button_fns={flatten(map_child(categories, 'atomic_button_fns'))}
     atomic_dropdown_menu={flatten(map_child(categories, 'atomic_dropdown_menu'))}
