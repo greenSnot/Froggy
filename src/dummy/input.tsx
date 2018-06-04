@@ -26,8 +26,8 @@ export default class Input extends React.Component<Props, State> {
     return <div
       className={`${styles.inputValue} ${this.props.editing ? styles.editing : ''}` }
       ref={this.ref}
-      onClick={(e) => {
-        e.stopPropagation();
+      onClick={(event) => {
+        event.stopPropagation();
         const offset = this.props.offset();
         const mask_content = () => (
           <div

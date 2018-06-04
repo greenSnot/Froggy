@@ -311,7 +311,7 @@ export default class Workspace extends React.Component<Props, State> {
     });
   }
 
-  workspace_on_drag_start = (e: MouseEvent<HTMLElement>) => {
+  workspace_on_drag_start = (e) => {
     this.workspace_is_mouse_down = true;
     this.workspace_drag_start_data = {
       mouse_global_x: e.pageX,
@@ -320,7 +320,7 @@ export default class Workspace extends React.Component<Props, State> {
       workspace_global_x: parseInt(this.brickly_ref.current.style.left) || 0,
     };
   }
-  workspace_on_drag = (e: MouseEvent<HTMLDivElement>) => {
+  workspace_on_drag = (e) => {
     if (this.mask_data.visibility) {
       return;
     }
@@ -331,7 +331,7 @@ export default class Workspace extends React.Component<Props, State> {
     };
     this.update();
   }
-  workspace_on_drag_end = (e: MouseEvent<HTMLDivElement>) => {
+  workspace_on_drag_end = (e) => {
     this.workspace_is_mouse_down = false;
   }
 
@@ -364,10 +364,10 @@ export default class Workspace extends React.Component<Props, State> {
       this.brick_drag_start_data.local_offset.y -= this.toolbox_bricks_ref.current.scrollTop;
     }
   }
-  brick_on_click = (e: MouseEvent<HTMLDivElement>) => {
+  brick_on_click = (e) => {
     this.active_brick_id = undefined;
   }
-  brick_on_first_drag = (e: MouseEvent<HTMLDivElement>) => {
+  brick_on_first_drag = (e) => {
     const drag_data = this.brick_drag_start_data;
     const id = drag_data.id;
     let brick_data = this.brick_id_to_data[id];
@@ -449,7 +449,7 @@ export default class Workspace extends React.Component<Props, State> {
     brick.ui.offset = offset;
     return brick;
   }
-  brick_on_drag = (e: MouseEvent<HTMLDivElement>) => {
+  brick_on_drag = (e) => {
     const drag_data = this.brick_drag_start_data;
     const id = drag_data.id;
     const brick_data = this.brick_id_to_data[id];
@@ -555,7 +555,7 @@ export default class Workspace extends React.Component<Props, State> {
     }
     // TODO
   }
-  brick_on_drag_end = (e: MouseEvent<HTMLDivElement>) => {
+  brick_on_drag_end = (e) => {
     if (this.active_brick_needs_removing) {
       this.remove_root_brick(this.brick_id_to_data[this.active_brick_id]);
       this.active_brick_needs_removing = false;
@@ -576,29 +576,45 @@ export default class Workspace extends React.Component<Props, State> {
       w: ref.clientWidth,
     };
   }
+  on_mouse_move_middleware = (e) => {
+    const event = {
+      pageX: e.touches ? e.touches[0].pageX : e.pageX,
+      pageY: e.touches ? e.touches[0].pageY : e.pageY,
+    };
+    if (this.workspace_is_mouse_down && !this.active_brick_id) {
+      this.workspace_on_drag(event);
+      return;
+    }
+    if (!this.active_brick_id) {
+      return;
+    }
+    this.brick_on_drag(event);
+  }
+  on_mouse_up_middleware = (event) => {
+    if (this.brick_is_dragging) {
+      this.brick_on_drag_end(event);
+    } else {
+      this.brick_on_click(event);
+    }
+    this.workspace_on_drag_end(event);
+  }
+  on_mouse_down_middleware = (e) => {
+    const event = {
+      pageX: e.touches ? e.touches[0].pageX : e.pageX,
+      pageY: e.touches ? e.touches[0].pageY : e.pageY,
+    };
+    this.workspace_on_drag_start(event);
+  }
   render() {
     return <div
       ref={this.brickly_wrap_ref}
       className={styles.bricklyWrap}
-      onMouseDown={this.workspace_on_drag_start}
-      onMouseMove={(e) => {
-        if (this.workspace_is_mouse_down && !this.active_brick_id) {
-          this.workspace_on_drag(e);
-          return;
-        }
-        if (!this.active_brick_id) {
-          return;
-        }
-        this.brick_on_drag(e);
-      }}
-      onMouseUp={(e) => {
-        if (this.brick_is_dragging) {
-          this.brick_on_drag_end(e);
-        } else {
-          this.brick_on_click(e);
-        }
-        this.workspace_on_drag_end(e);
-      }}
+      onMouseDown={this.on_mouse_down_middleware}
+      onTouchStart={this.on_mouse_down_middleware}
+      onMouseMove={this.on_mouse_move_middleware}
+      onTouchMove={this.on_mouse_move_middleware}
+      onMouseUp={this.on_mouse_up_middleware}
+      onTouchEnd={this.on_mouse_up_middleware}
     >
       <div
         ref={this.brickly_ref}
@@ -611,6 +627,8 @@ export default class Workspace extends React.Component<Props, State> {
         <div
           className={styles.toolbox}
           ref={this.toolbox_ref}
+          onTouchStart={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
           style={{
             left: `${-this.brickly_offset.x}px`,
             top: `${-this.brickly_offset.y}px`,
