@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
+    "target": "es6",
+    "module": "es6",
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": false,
     "moduleResolution": "node",
@@ -9,6 +9,7 @@
   },
   "exclude": [
     "node_modules",
+    "example",
     "libs"
   ]
 }

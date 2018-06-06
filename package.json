@@ -1,19 +1,22 @@
 {
   "name": "dickly",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/greenSnot/Brickly.git"
   },
   "scripts": {
     "dev": "webpack-dev-server --mode=development",
-    "build": "webpack"
+    "build": "tsc --outDir build && mkdir -p build/src/styles && find ./src/styles -name '*.less' -exec cp -prv '{}' './build/src/styles/' ';'",
+    "build-example": "webpack --mode=production"
   },
-  "main": "src/index.ts",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "dependencies": {
     "@types/react": "16.3.14",
     "@types/react-dom": "^16.0.5",
     "@types/three": "^0.91.10",
+    "declaration-bundler-webpack-plugin": "^1.0.3",
     "react": "^16.3.2",
     "react-addons-update": "^15.6.2",
     "react-dom": "^16.3.2",
