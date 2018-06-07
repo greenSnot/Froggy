@@ -1,30 +1,6 @@
 @import './toolbox.less';
 @import './brick.less';
 
-:global {
-  html, body, #main {
-    font-family: sans-serif;
-    font-size: 12px;
-    padding: 0;
-    margin: 0;
-    height: 100%;
-  }
-  input {
-    background: transparent;
-    border: 0;
-    text-align: center;
-    color: #fff;
-    height: 20px;
-  }
-  select {
-    background: transparent;
-    border: none;
-    height: 20px;
-    padding: 5px;
-    color: #fff;
-  }
-}
-
 .mask {
   height: 100%;
   width: 100%;
@@ -37,6 +13,8 @@
 }
 
 .bricklyWrap {
+  font-family: sans-serif;
+  font-size: 12px;
   user-select: none;
   overflow: hidden;
   position: relative;
@@ -51,4 +29,20 @@
   position: absolute;
   left: 0;
   top: 0;
+}
+
+.bricklyWrap input {
+  background: transparent;
+  border: 0;
+  text-align: center;
+  color: #fff;
+  height: 20px;
+}
+
+.bricklyWrap select {
+  background: transparent;
+  border: none;
+  height: 20px;
+  padding: 5px;
+  color: #fff;
 }

@@ -21,8 +21,6 @@ export const atomicText: string;
 export const atomicParam: string;
 export const atomicTextIndent: string;
 export const atomicButtonWrap: string;
-export const atomicButtonAdd: string;
-export const atomicButtonRemove: string;
 export const removing: string;
 export const mask: string;
 export const maskItem: string;
