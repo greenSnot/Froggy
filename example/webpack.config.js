@@ -4,7 +4,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const entries = {
-  index: './example/index.tsx',
+  index: './index.tsx',
 };
 module.exports = env => ({
   entry: entries,
@@ -45,7 +45,7 @@ module.exports = env => ({
         new HtmlWebpackPlugin({
           filename: `./${i}.html`,
           chunks: [i],
-          template: `./example/${i}.html`
+          template: `./${i}.html`
         })
     )
   ]

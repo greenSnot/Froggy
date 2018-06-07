@@ -4,8 +4,7 @@ import ReactDOM from 'react-dom';
 import injectTapEventPlugin from 'react-tap-event-plugin';
 injectTapEventPlugin();
 
-import Workspace from '../src/Workspace';
-import { Brick } from '../src/brick';
+import { Workspace, Brick } from 'frogly';
 
 import { atomic_button_fns, atomic_dropdown_menu, toolbox } from './toolbox';
 
