@@ -1,4 +1,4 @@
-export const brickly: string;
+export const froggy: string;
 export const wrap: string;
 export const active: string;
 export const inputs: string;

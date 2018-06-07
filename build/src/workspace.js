@@ -13,8 +13,8 @@ const is_procedure_with_output = (brick) => brick.type === 'procedure_with_outpu
 const is_procedure_return = (brick) => brick.type === 'procedure_return';
 function global_to_local(x, y, workspace) {
     return {
-        x: x - workspace.global_offset.x - workspace.brickly_offset.x,
-        y: y - workspace.global_offset.y - workspace.brickly_offset.y,
+        x: x - workspace.global_offset.x - workspace.froggy_offset.x,
+        y: y - workspace.global_offset.y - workspace.froggy_offset.y,
     };
 }
 export default class Workspace extends React.Component {
@@ -30,7 +30,7 @@ export default class Workspace extends React.Component {
         this.brick_refs = {};
         this.brick_inputs_refs = {};
         this.brick_parts_refs = {};
-        this.brickly_offset = {
+        this.froggy_offset = {
             x: 0,
             y: 0,
         };
@@ -61,7 +61,7 @@ export default class Workspace extends React.Component {
                         copy: () => {
                             const brick = this.brick_id_to_data[id];
                             const new_brick = clone(brick);
-                            new_brick.ui.offset = get_global_offset(this.brick_refs[id].current, this.brickly_ref.current);
+                            new_brick.ui.offset = get_global_offset(this.brick_refs[id].current, this.froggy_ref.current);
                             new_brick.ui.offset.x += 20;
                             new_brick.ui.offset.y += 20;
                             this.root_bricks.push(new_brick);
@@ -80,8 +80,8 @@ export default class Workspace extends React.Component {
             this.workspace_drag_start_data = {
                 mouse_global_x: e.pageX,
                 mouse_global_y: e.pageY,
-                workspace_global_y: parseInt(this.brickly_ref.current.style.top) || 0,
-                workspace_global_x: parseInt(this.brickly_ref.current.style.left) || 0,
+                workspace_global_y: parseInt(this.froggy_ref.current.style.top) || 0,
+                workspace_global_x: parseInt(this.froggy_ref.current.style.left) || 0,
             };
         };
         this.workspace_on_drag = (e) => {
@@ -89,14 +89,14 @@ export default class Workspace extends React.Component {
                 return;
             }
             const workspace_data = this.workspace_drag_start_data;
-            this.brickly_offset = {
+            this.froggy_offset = {
                 x: Math.round(workspace_data.workspace_global_x + e.pageX - workspace_data.mouse_global_x),
                 y: Math.round(workspace_data.workspace_global_y + e.pageY - workspace_data.mouse_global_y),
             };
-            this.toolbox_ref.current.style.left = `${-this.brickly_offset.x}px`;
-            this.toolbox_ref.current.style.top = `${-this.brickly_offset.y}px`;
-            this.brickly_ref.current.style.left = `${this.brickly_offset.x}px`;
-            this.brickly_ref.current.style.top = `${this.brickly_offset.y}px`;
+            this.toolbox_ref.current.style.left = `${-this.froggy_offset.x}px`;
+            this.toolbox_ref.current.style.top = `${-this.froggy_offset.y}px`;
+            this.froggy_ref.current.style.left = `${this.froggy_offset.x}px`;
+            this.froggy_ref.current.style.top = `${this.froggy_offset.y}px`;
         };
         this.workspace_on_drag_end = (e) => {
             this.workspace_is_mouse_down = false;
@@ -112,13 +112,13 @@ export default class Workspace extends React.Component {
                 this.brick_drag_start_data.id = id;
                 this.update_size(id);
             }
-            this.brick_drag_start_data.local_offset = get_global_offset(this.brick_refs[id].current, this.brickly_ref.current);
+            this.brick_drag_start_data.local_offset = get_global_offset(this.brick_refs[id].current, this.froggy_ref.current);
             const data = this.brick_id_to_data[id];
             if (data.ui.is_toolbox_brick) {
                 if (data.root) {
                     this.brick_drag_start_data.id = data.root;
                     this.update_size(data.root);
-                    this.brick_drag_start_data.local_offset = get_global_offset(this.brick_refs[data.root].current, this.brickly_ref.current);
+                    this.brick_drag_start_data.local_offset = get_global_offset(this.brick_refs[data.root].current, this.froggy_ref.current);
                 }
                 this.brick_drag_start_data.local_offset.x -= this.toolbox_bricks_ref.current.scrollLeft;
                 this.brick_drag_start_data.local_offset.y -= this.toolbox_bricks_ref.current.scrollTop;
@@ -177,7 +177,7 @@ export default class Workspace extends React.Component {
                 x: drag_data.local_offset.x + e.pageX - drag_data.mouse_global_x,
                 y: drag_data.local_offset.y + e.pageY - drag_data.mouse_global_y,
             };
-            this.active_brick_needs_removing = offset.x < -this.brickly_offset.x + this.toolbox_ref.current.clientWidth;
+            this.active_brick_needs_removing = offset.x < -this.froggy_offset.x + this.toolbox_ref.current.clientWidth;
             let need_update = false;
             const closest = this.inserting_candidates.reduce((m, i) => {
                 const current = this.brick_id_to_data[i];
@@ -257,7 +257,7 @@ export default class Workspace extends React.Component {
             if (need_update) {
                 this.update(() => {
                     this.inserting_candidates.forEach(i => {
-                        this.inserting_candidates_local_offset[i] = get_global_offset(this.brick_refs[i].current, this.brickly_ref.current);
+                        this.inserting_candidates_local_offset[i] = get_global_offset(this.brick_refs[i].current, this.froggy_ref.current);
                         this.update_size(i);
                     });
                 });
@@ -305,15 +305,15 @@ export default class Workspace extends React.Component {
             };
             this.workspace_on_drag_start(event);
         };
-        this.brickly_ref = React.createRef();
+        this.froggy_ref = React.createRef();
         this.toolbox_ref = React.createRef();
         this.toolbox_bricks_ref = React.createRef();
-        this.brickly_wrap_ref = React.createRef();
+        this.froggy_wrap_ref = React.createRef();
         this.mask_ref = React.createRef();
     }
     componentDidMount() {
-        this.global_offset = get_global_offset(this.brickly_wrap_ref.current);
-        this.brickly_wrap_ref.current.addEventListener('touchmove', (e) => {
+        this.global_offset = get_global_offset(this.froggy_wrap_ref.current);
+        this.froggy_wrap_ref.current.addEventListener('touchmove', (e) => {
             if (e.target.className !== styles.toolboxBricks) {
                 e.preventDefault();
             }
@@ -470,7 +470,7 @@ export default class Workspace extends React.Component {
             });
         }
         this.inserting_candidates.forEach(i => {
-            this.inserting_candidates_local_offset[i] = get_global_offset(this.brick_refs[i].current, this.brickly_ref.current);
+            this.inserting_candidates_local_offset[i] = get_global_offset(this.brick_refs[i].current, this.froggy_ref.current);
             this.update_size(i);
         });
     }
@@ -530,14 +530,14 @@ export default class Workspace extends React.Component {
         };
     }
     render() {
-        return React.createElement("div", { ref: this.brickly_wrap_ref, key: this.props.id, className: styles.bricklyWrap, onMouseDown: this.on_mouse_down_middleware, onTouchStart: this.on_mouse_down_middleware, onMouseMove: this.on_mouse_move_middleware, onTouchMove: this.on_mouse_move_middleware, onMouseUp: this.on_mouse_up_middleware, onTouchEnd: this.on_mouse_up_middleware },
-            React.createElement("div", { ref: this.brickly_ref, className: styles.brickly, style: {
-                    left: `${this.brickly_offset.x}px`,
-                    top: `${this.brickly_offset.y}px`,
+        return React.createElement("div", { ref: this.froggy_wrap_ref, key: this.props.id, className: styles.froggyWrap, onMouseDown: this.on_mouse_down_middleware, onTouchStart: this.on_mouse_down_middleware, onMouseMove: this.on_mouse_move_middleware, onTouchMove: this.on_mouse_move_middleware, onMouseUp: this.on_mouse_up_middleware, onTouchEnd: this.on_mouse_up_middleware },
+            React.createElement("div", { ref: this.froggy_ref, className: styles.froggy, style: {
+                    left: `${this.froggy_offset.x}px`,
+                    top: `${this.froggy_offset.y}px`,
                 } },
                 React.createElement("div", { className: styles.toolbox, ref: this.toolbox_ref, onTouchStart: (e) => e.stopPropagation(), onMouseDown: (e) => e.stopPropagation(), style: {
-                        left: `${-this.brickly_offset.x}px`,
-                        top: `${-this.brickly_offset.y}px`,
+                        left: `${-this.froggy_offset.x}px`,
+                        top: `${-this.froggy_offset.y}px`,
                     } },
                     React.createElement("div", { className: styles.categories }, Object.keys(this.toolbox.categories).map(i => React.createElement("div", { key: i, onClick: () => {
                             this.toolbox.activeCategory = i;

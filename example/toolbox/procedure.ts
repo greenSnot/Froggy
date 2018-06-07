@@ -1,4 +1,4 @@
-import { gen_id, Brick, BrickOutput } from 'frogly';
+import { gen_id, Brick, BrickOutput } from 'froggy';
 import { atomicButtonAdd, atomicButtonRemove } from './styles/button.less';
 
 const bricks: Brick[] = [

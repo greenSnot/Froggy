@@ -1,4 +1,4 @@
-import { Brick, BrickOutput } from 'frogly';
+import { Brick, BrickOutput } from 'froggy';
 
 const bricks: Brick[] = [
   {

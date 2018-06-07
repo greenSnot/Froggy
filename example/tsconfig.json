@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "es6",
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": false,
+    "moduleResolution": "node",
+    "jsx": "react",
+    "baseUrl": ".",
+    "paths": {
+      "froggy": [".."]
+    }
+  },
+  "exclude": [
+    "!/node_modules/@types",
+    "node_modules",
+    "example",
+    "libs"
+  ]
+}

@@ -1,9 +1,9 @@
 {
-  "name": "frogly",
+  "name": "froggy",
   "version": "1.0.4",
   "repository": {
     "type": "git",
-    "url": "https://github.com/greenSnot/Frogly.git"
+    "url": "https://github.com/greenSnot/Froggy.git"
   },
   "scripts": {
     "build": "tsc --outDir build && mkdir -p build/src/styles && find ./src/styles -name '*.less' -exec cp -prv '{}' './build/src/styles/' ';'",

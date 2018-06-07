@@ -1,5 +1,4 @@
 const path = require('path');
-// const DeclarationBundlerPlugin = require('declaration-bundler-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
@@ -37,7 +36,10 @@ module.exports = env => ({
     ]
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".js"]
+    extensions: [".ts", ".tsx", ".js"],
+    alias: {
+      froggy: path.resolve(__dirname, '../'),
+    },
   },
   plugins: [
     ...Object.keys(entries).map(

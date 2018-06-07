@@ -1,8 +1,10 @@
-### Example
+### Live Example
 
-[Playground](https://greensnot.github.io/Brickly/dist/)
+[Playground](https://greensnot.github.io/Frogly/example/dist/)
 
+#### Debug / Run example in local
 ```
+cd example
 npm install
 npm run dev
 ```
