@@ -473,7 +473,7 @@ export default class Workspace extends React.Component<Props, State> {
       y: drag_data.local_offset.y + e.pageY - drag_data.mouse_global_y,
     };
     this.active_brick_needs_removing = offset.x < -this.froggy_offset.x + this.toolbox_ref.current.clientWidth;
-    let need_update = false;
+    let needs_update = false;
     const closest = this.inserting_candidates.reduce(
       (m, i) => {
         const current = this.brick_id_to_data[i];
@@ -527,7 +527,7 @@ export default class Workspace extends React.Component<Props, State> {
         this.remove_root_brick(brick_data, false);
         brick_data.ui.offset.x = 0;
         brick_data.ui.offset.y = 0;
-        need_update = true;
+        needs_update = true;
       }
     } else {
       if (this.brick_is_inserting) {
@@ -536,7 +536,7 @@ export default class Workspace extends React.Component<Props, State> {
         if (!brick_data.is_root) {
           this.detach_brick(id, this.active_brick_tail_id);
         }
-        need_update = true;
+        needs_update = true;
       }
     }
 
@@ -551,10 +551,11 @@ export default class Workspace extends React.Component<Props, State> {
         this.remove_root_brick(target, false);
         this.root_bricks.push(target);
       }
-      need_update = true;
+      this.root_bricks.sort((a, b) => a.ui.offset.x - b.ui.offset.x);
+      needs_update = true;
     }
 
-    if (need_update) {
+    if (needs_update) {
       this.update(() => {
         this.inserting_candidates.forEach(i => {
           this.inserting_candidates_local_offset[i] = get_global_offset(this.brick_refs[i].current, this.froggy_ref.current);
@@ -694,7 +695,10 @@ function root_brick_to_brick_component(workspace: Workspace, root_brick) {
       }
       const basic_fns = {
         onChange: (value) => {
-          brick.ui.value = value;
+          brick.ui.value = brick.output === BrickOutput.string ? value : (
+            brick.output === BrickOutput.number ?
+            (parseFloat(value) || 0) : value
+          );
           workspace.root_bricks_on_change();
         },
         show: (content, cb?) => {
