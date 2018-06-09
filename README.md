@@ -1,6 +1,6 @@
-### Live Example
+### Live example
 
-[Playground](https://greensnot.github.io/Frogly/example/dist/)
+[Playground](https://greensnot.github.io/Froggy/example/dist/)
 
 #### Debug / Run example in local
 ```
