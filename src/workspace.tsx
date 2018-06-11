@@ -199,7 +199,7 @@ export default class Workspace extends React.Component<Props, State> {
         },
       });
       if (procedures_with_output[i]) {
-        const id_with_output = `procedure_with_output∫{i}`;
+        const id_with_output = `procedure_with_output∫${i}`;
         this.toolbox.categories.procedure.push({
           id: id_with_output,
           type: 'procedure_with_output',
