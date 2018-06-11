@@ -38,7 +38,7 @@ export type RuntimeBrick = {
   output?: BrickOutput,
   inputs?: Brick[],
 
-  is_static?: boolean, // avoid to be insertCandidate
+  is_static?: boolean, // avoid to be inserting candidate
 };
 
 export type Brick = RuntimeBrick & {

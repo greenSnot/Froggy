@@ -20,9 +20,11 @@
 }
 
 .wrap {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  width: 0px;
+  overflow-x: visible;
   position: relative;
-  width: fit-content;
 }
 
 .inputs {
@@ -33,6 +35,7 @@
   padding: 5px 10px 5px 10px;
   color: #fff;
   min-height: 10px;
+  width: fit-content;
   box-sizing: border-box;
 }
 
@@ -48,8 +51,8 @@
   content: '';
   position: absolute;
   right: calc(100%);
-  top: -1px;
-  height: calc(100%);
+  top: 0px;
+  height: calc(100% - 1px);
   width: @parts-indent / 3;
   box-sizing: border-box;
   box-shadow: 0px 6px 0px 0px rgba(0, 0, 0, 0.3);
@@ -87,17 +90,11 @@
   padding: 0!important;
   border: 0!important;
 }
+.inputs > .wrap {
+  width: fit-content;
+}
 .container > .inputs .wrap {
   display: flex;
-}
-.number {
-  border-radius: 40px;
-  background-color: @blue;
-  min-width: 30px;
-  min-height: 20px;
-}
-.froggy > .number, .toolboxBricks > .number {
-  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
 }
 
 .void {
@@ -110,45 +107,44 @@
   border-bottom: 1px solid rgba(0,0,0, 0.1);
 }
 
-.boolean {
-  border-radius: 40px;
-  background-color: @yellow;
-  min-width: 30px;
-  min-height: 20px;
-}
-.froggy > .boolean, .toolboxBricks > .boolean {
-  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
-}
-
-.array {
-  border-radius: 40px;
-  background-color: @orange;
-  min-width: 30px;
-  min-height: 20px;
-}
-.froggy > .array, .toolboxBricks > .array {
-  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
-}
-
-.string {
-  border-radius: 40px;
-  background-color: @purple;
-  min-width: 30px;
-  min-height: 20px;
-}
-.froggy > .string, .toolboxBricks > .string {
-  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
-}
+.boolean,
+.array,
+.number,
+.string,
 .any {
   border-radius: 40px;
   background-color: @green;
   min-width: 30px;
   min-height: 20px;
+  width: fit-content;
 }
-.froggy > .any, .toolboxBricks > .any {
+.number {
+  background-color: @blue;
+}
+.boolean {
+  background-color: @yellow;
+}
+.array {
+  background-color: @orange;
+}
+.string{
+  background-color: @purple;
+}
+
+.froggy > .boolean, .toolboxBricks > .boolean,
+.froggy > .array, .toolboxBricks > .array,
+.froggy > .string, .toolboxBricks > .string,
+.froggy > .any, .toolboxBricks > .any,
+.froggy > .number, .toolboxBricks > .number
+{
   border-bottom: 5px solid rgba(0, 0, 0, 0.2);
 }
-.array > .inputs, .any > .inputs, .string > .inputs, .number > .inputs, .boolean > .inputs {
+
+.array > .inputs,
+.any > .inputs,
+.string > .inputs,
+.number > .inputs,
+.boolean > .inputs {
   padding-top: 2px;
   padding-bottom: 2px;
 }
@@ -166,16 +162,18 @@
 .atomicParam {
   width: 100%;
   height: 100%;
-  position: absolute;
   display: inline-flex;
   color: #fff;
   justify-content: center;
+  padding: 0 5px 0 5px;
+  box-sizing: border-box;
   align-items: center;
 }
 
 .atomicButtonWrap {
   position: relative;
   height: 100%;
+  width: fit-content;
   display: flex;
   justify-content: center;
   align-items: center;

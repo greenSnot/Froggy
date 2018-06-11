@@ -551,7 +551,6 @@ export default class Workspace extends React.Component<Props, State> {
         this.remove_root_brick(target, false);
         this.root_bricks.push(target);
       }
-      this.root_bricks.sort((a, b) => a.ui.offset.x - b.ui.offset.x);
       needs_update = true;
     }
 
