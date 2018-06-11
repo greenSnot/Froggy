@@ -694,11 +694,14 @@ function root_brick_to_brick_component(workspace: Workspace, root_brick) {
       }
       const basic_fns = {
         onChange: (value) => {
-          brick.ui.value = brick.output === BrickOutput.string ? value : (
-            brick.output === BrickOutput.number ?
-            (parseFloat(value) || 0) : value
-          );
+          if (brick.output === BrickOutput.number) {
+            brick.ui.value = parseFloat(value) || 0;
+            workspace.update();
+          } else {
+            brick.ui.value = value;
+          }
           workspace.root_bricks_on_change();
+          return brick.ui.value;
         },
         show: (content, cb?) => {
           workspace.mask_data.content = content;

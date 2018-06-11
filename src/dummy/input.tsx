@@ -49,7 +49,7 @@ export default class Input extends React.Component<Props, State> {
                 ref={this.input_ref}
                 defaultValue={this.props.value}
                 onBlur={(e) => {
-                  this.props.onChange(e.currentTarget.value);
+                  this.ref.current.innerText = this.props.onChange(e.currentTarget.value);
                 }}
                 onInput={(e) => {
                   this.ref.current.innerText = e.currentTarget.value;
