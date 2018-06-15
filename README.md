@@ -1,4 +1,4 @@
-### Live example
+### Example
 
 [Playground](https://greensnot.github.io/Froggy/example/dist/)
 
@@ -14,3 +14,4 @@ npm run dev
 
 ### TODO
 partial rendering(root brick level)
+shadow brick
