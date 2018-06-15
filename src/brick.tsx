@@ -212,10 +212,9 @@ class BrickComponent extends React.Component<Props, State> {
     const inputs = this.props.inputs.length ?
       <div
         {...events}
-        className={styles.inputs}
+        className={`${styles.inputs} ${this.props.show_hat ? styles.hat : ''}`}
         ref={this.props.brick_inputs_ref}
       >
-        {this.props.show_hat ? <div className={styles.hat}/> : null}
         {this.props.inputs}
       </div> : null;
     const parts = this.props.parts.length ?
@@ -231,7 +230,7 @@ class BrickComponent extends React.Component<Props, State> {
         marginLeft: `${this.props.offset && this.props.offset.x || 0}px`,
         marginTop: `${this.props.offset && this.props.offset.y || 0}px`,
       }}
-      className={`${styles.wrap} ${styles[BrickOutput[this.props.output || BrickOutput.void]]} ${this.props.is_removing ? styles.removing : ''} ${this.props.is_container ? styles.container : ''}  ${this.props.is_ghost ? styles.ghost : ''} ${this.props.active ? styles.active : ''}`}
+      className={`${styles.wrap} ${this.props.output ? `${styles.output} ${styles[BrickOutput[this.props.output]]}` : ''} ${this.props.is_removing ? styles.removing : ''} ${this.props.is_container ? styles.container : ''}  ${this.props.is_ghost ? styles.ghost : ''} ${this.props.active ? styles.active : ''}`}
       data-id={this.props.id}
       ref={this.props.brick_ref}
       {...this.props.children ? events : {}}

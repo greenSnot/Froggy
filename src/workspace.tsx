@@ -480,7 +480,7 @@ export default class Workspace extends React.Component<Props, State> {
         const parent = this.brick_id_to_data[current.ui.parent];
         const x1 = offset.x;
         const y1 = offset.y;
-        const x2 = this.inserting_candidates_local_offset[i].x + (parent && parent.parts ? 20 : 0);
+        const x2 = this.inserting_candidates_local_offset[i].x + (parent && parent.parts ? 15 : 0);
         const y2 = this.inserting_candidates_local_offset[i].y + (brick_data.output ? 0 : this.brick_id_to_size[i].h);
         const distance = distance_2d(x1, y1, x2, y2);
         if (distance < m.distance) {
@@ -690,7 +690,7 @@ function root_brick_to_brick_component(workspace: Workspace, root_brick) {
     let child;
     if (AtomicBrickEnum[brick.type]) {
       if (brick.type === 'atomic_text') {
-        return <span key={brick.id} className={styles.atomicText}>{brick.ui.value[0] === ' ' ? <div className={styles.atomicTextIndent}/> : null}{brick.ui.value}</span>;
+        return <div key={brick.id} className={styles.atomicText}>{brick.ui.value[0] === ' ' ? <div className={styles.atomicTextIndent}/> : null}{brick.ui.value}</div>;
       }
       const basic_fns = {
         onChange: (value) => {

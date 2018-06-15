@@ -26,7 +26,6 @@
   overflow-x: visible;
   position: relative;
 }
-
 .inputs {
   cursor: -webkit-grab;
   display: inline-flex;
@@ -37,6 +36,26 @@
   min-height: 10px;
   width: fit-content;
   box-sizing: border-box;
+  min-width: 50px;
+  background-color: @green;
+  box-shadow: 0px 5px 0px 0px @green-dark;
+  border-bottom: 1px solid rgba(0,0,0, 0.1);
+}
+
+.inputs > div {
+  margin-left: 3px!important;
+}
+.inputs > div:first-child {
+  margin-left: 0px!important;
+}
+.inputs.hat:after {
+  content: '';
+  width: 50px;
+  height: 10px;
+  background-color: inherit;
+  border: inherit;
+  bottom: 100%;
+  position: absolute;
 }
 
 .parts {
@@ -59,18 +78,6 @@
   background: #d4d3d3;
 }
 
-.next {
-}
-
-.hat {
-  width: 50px;
-  height: 10px;
-  background-color: inherit;
-  border: inherit;
-  bottom: 100%;
-  position: absolute;
-}
-
 .container {
   border: 1px solid #fff;
   border-radius: 40px;
@@ -78,7 +85,6 @@
   min-width: 10px;
   min-height: 20px;
   box-shadow: inset 0px 5px 0px 0px rgba(0, 0, 0, 0.2);
-  margin: 0 5px 0 5px !important;
 }
 .inputs > .container:first-child {
   margin-left: 0 !important;
@@ -89,6 +95,7 @@
 .container > .inputs {
   padding: 0!important;
   border: 0!important;
+  box-shadow: none;
 }
 .inputs > .wrap {
   width: fit-content;
@@ -98,21 +105,7 @@
   justify-content: center;
 }
 
-.void {
-  border: 0;
-}
-.void > .inputs {
-  min-width: 50px;
-  background-color: @green;
-  box-shadow: 0px 5px 0px 0px @green-dark;
-  border-bottom: 1px solid rgba(0,0,0, 0.1);
-}
-
-.boolean,
-.array,
-.number,
-.string,
-.any {
+.output {
   border-radius: 40px;
   background-color: @green;
   min-width: 30px;
@@ -132,22 +125,24 @@
   background-color: @purple;
 }
 
-.froggy > .boolean, .toolboxBricks > .boolean,
-.froggy > .array, .toolboxBricks > .array,
-.froggy > .string, .toolboxBricks > .string,
-.froggy > .any, .toolboxBricks > .any,
-.froggy > .number, .toolboxBricks > .number
-{
+.froggy > .output, .toolboxBricks > .output {
   border-bottom: 5px solid rgba(0, 0, 0, 0.2);
 }
 
-.array > .inputs,
-.any > .inputs,
-.string > .inputs,
-.number > .inputs,
-.boolean > .inputs {
-  padding-top: 2px;
-  padding-bottom: 2px;
+.output > .inputs {
+  padding: 2px;
+  box-shadow: none;
+  border-bottom: none;
+  min-width: 30px;
+  border-radius: inherit;
+  background: inherit;
+}
+
+.output > .inputs > div.atomicText:first-child {
+  margin-left: 5px!important;
+}
+.output > .inputs > div.atomicText:last-child {
+  margin-right: 5px!important;
 }
 
 .ghost > .inputs {
