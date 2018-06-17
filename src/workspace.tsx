@@ -55,6 +55,115 @@ function global_to_local(x, y, workspace: Workspace) {
   };
 }
 
+class RootBrick extends React.Component<{
+  root_brick: Brick,
+  workspace: Workspace,
+}, {}> {
+  constructor(props) {
+    super(props);
+    this.props.workspace.root_brick_id_to_component[this.props.root_brick.id] = this;
+  }
+  render() {
+    const root_brick = this.props.root_brick;
+    const workspace = this.props.workspace;
+    const init_brick_id_to_data = (data: Brick) => {
+      workspace.brick_id_to_data[data.id] = data;
+      workspace.brick_refs[data.id] = workspace.brick_refs[data.id] || React.createRef();
+      workspace.brick_inputs_refs[data.id] = workspace.brick_inputs_refs[data.id] || React.createRef();
+      workspace.brick_parts_refs[data.id] = workspace.brick_parts_refs[data.id] || React.createRef();
+      data.parts && data.parts.forEach(i => init_brick_id_to_data(i));
+      data.inputs && data.inputs.forEach(i => init_brick_id_to_data(i));
+      data.next && init_brick_id_to_data(data.next);
+    };
+    init_brick_id_to_data(root_brick);
+    const init_brick_instance = (brick: Brick) => {
+      const id = brick.id;
+      let child;
+      if (AtomicBrickEnum[brick.type]) {
+        if (brick.type === 'atomic_text') {
+          return <div key={brick.id} className={styles.atomicText}>{brick.ui.value[0] === ' ' ? <div className={styles.atomicTextIndent}/> : null}{brick.ui.value}</div>;
+        }
+        const basic_fns = {
+          onChange: (value) => {
+            if (brick.output === BrickOutput.number) {
+              brick.ui.value = parseFloat(value) || 0;
+              workspace.update();
+            } else {
+              brick.ui.value = value;
+            }
+            workspace.root_bricks_on_change();
+            return brick.ui.value;
+          },
+          show: (content, cb?) => {
+            workspace.mask_data.content = content;
+            workspace.mask_data.visibility = true;
+            workspace.mask_data.brick_id = brick.id;
+            workspace.update(cb || (() => {}));
+          },
+          hide: () => {
+            workspace.mask_data.visibility = false;
+            workspace.mask_data.brick_id = undefined;
+            workspace.update();
+          },
+        };
+        const select_fns = {
+          ...basic_fns,
+          offset: () => {
+            const offset = get_global_offset(workspace.brick_refs[brick.id].current);
+            offset.y += 40;
+            return offset;
+          },
+        };
+        const input_fns = {
+          ...basic_fns,
+          offset: () => {
+            const offset = get_global_offset(workspace.brick_refs[brick.id].current);
+            offset.x++;
+            offset.y++;
+            return offset;
+          },
+        };
+        const typeToInstance = {
+          atomic_input_string: () => <Input
+            value={brick.ui.value.toString()}
+            {...input_fns}
+            editing={workspace.mask_data.visibility && workspace.mask_data.brick_id === brick.id} />,
+          atomic_input_number: () => typeToInstance.atomic_input_string(),
+          atomic_dropdown: () => <Select value={brick.ui.value} options={workspace.props.atomic_dropdown_menu[brick.ui.dropdown]} {...select_fns} />,
+          atomic_boolean: () => typeToInstance.atomic_dropdown(),
+          atomic_button: () => <div key={brick.id} className={styles.atomicButtonWrap}><div className={brick.ui.className} onClick={(e) => {
+            e.stopPropagation();
+            workspace.props.atomic_button_fns[brick.ui.value](workspace.brick_id_to_data, brick, () => workspace.update(() => workspace.root_bricks_on_change()));
+          }}/></div>,
+          atomic_param: () => <div key={brick.id} className={styles.atomicParam}>{brick.ui.value}</div>,
+        };
+        child = typeToInstance[brick.type]();
+      }
+      return (
+        <BrickComponent
+          styles={styles}
+          key={id}
+          id={id}
+          data={brick}
+          brick_id_to_component={workspace.brick_id_to_component}
+          active={id === workspace.active_brick_id}
+          brick_ref={workspace.brick_refs[id]}
+          is_container={is_container(brick)}
+          brick_inputs_ref={workspace.brick_inputs_refs[id]}
+          brick_parts_ref={workspace.brick_parts_refs[id]}
+          on_drag_start={workspace.brick_on_drag_start}
+          on_context_menu={workspace.brick_on_context_menu}
+          parts={brick.parts ? brick.parts.map(i => init_brick_instance(i)) : []}
+          inputs={brick.inputs ? brick.inputs.map(i => init_brick_instance(i)) : []}
+          next={brick.next ? init_brick_instance(brick.next) : null}
+          children={child}
+        />
+      );
+    };
+    return init_brick_instance(root_brick);
+  }
+}
+
 export default class Workspace extends React.Component<Props, State> {
   active_brick_needs_removing = false;
   toolbox_ref;
@@ -71,7 +180,6 @@ export default class Workspace extends React.Component<Props, State> {
 
   toolbox;
 
-  ghost_bricks = {};
   brick_refs = {};
   brick_inputs_refs = {};
   brick_parts_refs = {};
@@ -105,6 +213,8 @@ export default class Workspace extends React.Component<Props, State> {
   workspace_is_mouse_down = false;
   root_bricks = [];
   brick_id_to_data: {[id: string]: Brick} = {};
+  brick_id_to_component = {};
+  root_brick_id_to_component = {};
   constructor(props) {
     super(props);
     this.froggy_ref = React.createRef();
@@ -419,7 +529,9 @@ export default class Workspace extends React.Component<Props, State> {
       ++root_index;
     }
     if (clean_refs) {
+      delete this.root_brick_id_to_component[brick.id];
       for_each_brick(brick, undefined, (i) => {
+        delete this.brick_id_to_component[i.id];
         delete this.brick_refs[i.id];
         delete this.brick_inputs_refs[i.id];
         delete this.brick_parts_refs[i.id];
@@ -453,7 +565,10 @@ export default class Workspace extends React.Component<Props, State> {
     }
     brick.is_root = true;
     brick.root = undefined;
-    for_each_brick(brick, undefined, i => i.root = id);
+    for_each_brick(brick, undefined, i => {
+      i.root = id;
+      i.ui.is_ghost = false;
+    });
     this.root_bricks.push(brick);
     brick.ui.offset = offset;
     return brick;
@@ -472,8 +587,13 @@ export default class Workspace extends React.Component<Props, State> {
       x: drag_data.local_offset.x + e.pageX - drag_data.mouse_global_x,
       y: drag_data.local_offset.y + e.pageY - drag_data.mouse_global_y,
     };
-    this.active_brick_needs_removing = offset.x < -this.froggy_offset.x + this.toolbox_ref.current.clientWidth;
-    let needs_update = false;
+    let workspace_needs_update = false;
+    let needs_update_size = false;
+    const active_brick_needs_removing = offset.x < -this.froggy_offset.x + this.toolbox_ref.current.clientWidth;
+    if (this.active_brick_needs_removing != active_brick_needs_removing) {
+      this.active_brick_needs_removing = active_brick_needs_removing;
+      this.brick_id_to_data[id].ui.is_removing = active_brick_needs_removing;
+    }
     const closest = this.inserting_candidates.reduce(
       (m, i) => {
         const current = this.brick_id_to_data[i];
@@ -506,6 +626,7 @@ export default class Workspace extends React.Component<Props, State> {
               x: offset.x + 20,
               y: offset.y + 20,
             });
+            needs_update_size = true;
           }
           closest_brick.inputs = [brick_data];
           brick_data.ui.parent = closest_brick.id;
@@ -517,26 +638,27 @@ export default class Workspace extends React.Component<Props, State> {
           closest_brick.next = brick_data;
           brick_data.prev = closest_brick.id;
         }
-        this.ghost_bricks = [];
+
+        const root_id = closest_brick.root || closest_brick.id;
         for_each_brick(brick_data, tail, (i) => {
-          this.ghost_bricks[i.id] = true;
-          i.root = closest_brick.root || closest_brick.id;
+          i.ui.is_ghost = true;
+          i.root = root_id;
         });
         brick_data.is_root = false;
 
         this.remove_root_brick(brick_data, false);
         brick_data.ui.offset.x = 0;
         brick_data.ui.offset.y = 0;
-        needs_update = true;
+
+        workspace_needs_update = true;
       }
     } else {
       if (this.brick_is_inserting) {
-        this.ghost_bricks = {};
         this.brick_is_inserting = false;
         if (!brick_data.is_root) {
           this.detach_brick(id, this.active_brick_tail_id);
         }
-        needs_update = true;
+        workspace_needs_update = true;
       }
     }
 
@@ -550,12 +672,17 @@ export default class Workspace extends React.Component<Props, State> {
       if (target !== this.root_bricks[this.root_bricks.length - 1]) {
         this.remove_root_brick(target, false);
         this.root_bricks.push(target);
+        workspace_needs_update = true;
+      } else {
+        this.brick_id_to_component[target.id].forceUpdate();
       }
-      needs_update = true;
     }
 
-    if (needs_update) {
+    if (workspace_needs_update) {
       this.update(() => {
+        if (!needs_update_size) {
+          return;
+        }
         this.inserting_candidates.forEach(i => {
           this.inserting_candidates_local_offset[i] = get_global_offset(this.brick_refs[i].current, this.froggy_ref.current);
           this.update_size(i);
@@ -569,17 +696,21 @@ export default class Workspace extends React.Component<Props, State> {
       this.remove_root_brick(this.brick_id_to_data[this.active_brick_id]);
       this.active_brick_needs_removing = false;
     }
+    if (this.brick_is_inserting) {
+      const active_brick = this.brick_id_to_data[this.active_brick_id];
+      const active_brick_tail = this.brick_id_to_data[this.active_brick_tail_id];
+      for_each_brick(active_brick, active_brick_tail, (i) => i.ui.is_ghost = false);
+    }
     this.active_brick_id = undefined;
     this.brick_is_dragging = false;
     this.clear_inserting_candidates();
-    this.ghost_bricks = {};
     this.update(() => this.root_bricks_on_change());
   }
 
-  update_size(id, proxy = undefined) {
-    const ref = this.brick_inputs_refs[proxy || id].current ||
-      this.brick_parts_refs[proxy || id].current ||
-      this.brick_refs[proxy || id].current;
+  update_size(id) {
+    const ref = this.brick_inputs_refs[id].current ||
+      this.brick_parts_refs[id].current ||
+      this.brick_refs[id].current;
     this.brick_id_to_size[id] = {
       h: ref.clientHeight,
       w: ref.clientWidth,
@@ -658,10 +789,10 @@ export default class Workspace extends React.Component<Props, State> {
             className={styles.toolboxBricks}
             ref={this.toolbox_bricks_ref}
           >
-            {this.toolbox.categories[this.toolbox.activeCategory].map(i => root_brick_to_brick_component(this, i))}
+            {this.toolbox.categories[this.toolbox.activeCategory].map(i => <RootBrick key={i.id} workspace={this} root_brick={i}/>)}
           </div>
         </div>
-        {this.root_bricks.map(i => root_brick_to_brick_component(this, i))}
+        {this.root_bricks.map(i => <RootBrick key={i.id} workspace={this} root_brick={i}/>)}
       </div>
       <div
         className={styles.mask}
@@ -672,105 +803,4 @@ export default class Workspace extends React.Component<Props, State> {
       >{this.mask_data.content}</div>
     </div>;
   }
-}
-
-function root_brick_to_brick_component(workspace: Workspace, root_brick) {
-  const init_brick_id_to_data = (data: Brick) => {
-    workspace.brick_id_to_data[data.id] = data;
-    workspace.brick_refs[data.id] = workspace.brick_refs[data.id] || React.createRef();
-    workspace.brick_inputs_refs[data.id] = workspace.brick_inputs_refs[data.id] || React.createRef();
-    workspace.brick_parts_refs[data.id] = workspace.brick_parts_refs[data.id] || React.createRef();
-    data.parts && data.parts.forEach(i => init_brick_id_to_data(i));
-    data.inputs && data.inputs.forEach(i => init_brick_id_to_data(i));
-    data.next && init_brick_id_to_data(data.next);
-  };
-  init_brick_id_to_data(root_brick);
-  const init_brick_instance = (brick: Brick) => {
-    const id = brick.id;
-    let child;
-    if (AtomicBrickEnum[brick.type]) {
-      if (brick.type === 'atomic_text') {
-        return <div key={brick.id} className={styles.atomicText}>{brick.ui.value[0] === ' ' ? <div className={styles.atomicTextIndent}/> : null}{brick.ui.value}</div>;
-      }
-      const basic_fns = {
-        onChange: (value) => {
-          if (brick.output === BrickOutput.number) {
-            brick.ui.value = parseFloat(value) || 0;
-            workspace.update();
-          } else {
-            brick.ui.value = value;
-          }
-          workspace.root_bricks_on_change();
-          return brick.ui.value;
-        },
-        show: (content, cb?) => {
-          workspace.mask_data.content = content;
-          workspace.mask_data.visibility = true;
-          workspace.mask_data.brick_id = brick.id;
-          workspace.update(cb || (() => {}));
-        },
-        hide: () => {
-          workspace.mask_data.visibility = false;
-          workspace.mask_data.brick_id = undefined;
-          workspace.update();
-        },
-      };
-      const select_fns = {
-        ...basic_fns,
-        offset: () => {
-          const offset = get_global_offset(workspace.brick_refs[brick.id].current);
-          offset.y += 40;
-          return offset;
-        },
-      };
-      const input_fns = {
-        ...basic_fns,
-        offset: () => {
-          const offset = get_global_offset(workspace.brick_refs[brick.id].current);
-          offset.x++;
-          offset.y++;
-          return offset;
-        },
-      };
-      const typeToInstance = {
-        atomic_input_string: () => <Input
-          value={brick.ui.value.toString()}
-          {...input_fns}
-          editing={workspace.mask_data.visibility && workspace.mask_data.brick_id === brick.id} />,
-        atomic_input_number: () => typeToInstance.atomic_input_string(),
-        atomic_dropdown: () => <Select value={brick.ui.value} options={workspace.props.atomic_dropdown_menu[brick.ui.dropdown]} {...select_fns} />,
-        atomic_boolean: () => typeToInstance.atomic_dropdown(),
-        atomic_button: () => <div key={brick.id} className={styles.atomicButtonWrap}><div className={brick.ui.className} onClick={(e) => {
-          e.stopPropagation();
-          workspace.props.atomic_button_fns[brick.ui.value](workspace.brick_id_to_data, brick, () => workspace.update(() => workspace.root_bricks_on_change()));
-        }}/></div>,
-        atomic_param: () => <div key={brick.id} className={styles.atomicParam}>{brick.ui.value}</div>,
-      };
-      child = typeToInstance[brick.type]();
-    }
-    return (
-      <BrickComponent
-        styles={styles}
-        key={id}
-        id={id}
-        is_removing={id === workspace.active_brick_id && workspace.active_brick_needs_removing}
-        active={id === workspace.active_brick_id}
-        is_ghost={workspace.ghost_bricks[id]}
-        offset={brick.is_root && brick.ui.offset}
-        output={brick.output}
-        show_hat={brick.ui.show_hat}
-        brick_ref={workspace.brick_refs[id]}
-        is_container={is_container(brick)}
-        brick_inputs_ref={workspace.brick_inputs_refs[id]}
-        brick_parts_ref={workspace.brick_parts_refs[id]}
-        on_drag_start={workspace.brick_on_drag_start}
-        on_context_menu={workspace.brick_on_context_menu}
-        parts={brick.parts ? brick.parts.map(i => init_brick_instance(i)) : []}
-        inputs={brick.inputs ? brick.inputs.map(i => init_brick_instance(i)) : []}
-        next={brick.next ? init_brick_instance(brick.next) : null}
-        children={child}
-      />
-    );
-  };
-  return init_brick_instance(root_brick);
 }

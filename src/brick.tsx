@@ -47,6 +47,8 @@ export type Brick = RuntimeBrick & {
     copier?: boolean, // for output container
     parent?: BrickId, // part's parent or input's parent
     show_hat?: boolean,
+    is_removing?: boolean,
+    is_ghost?: boolean,
     offset?: {
       x: number,
       y: number,
@@ -83,10 +85,12 @@ export const clone = (brick: Brick, with_ui = true) => {
     if (with_ui) {
       res.ui = {
         ...b.ui,
-        is_toolbox_brick: false,
         parent: parent,
         delegate: b.output ? undefined : parent,
       };
+      delete res.ui.is_toolbox_brick;
+      delete res.ui.is_removing;
+      delete res.ui.is_ghost;
     }
     if (b.next !== undefined) {
       res.next = b.next === null ? null : do_clone(b.next, id);
@@ -112,16 +116,10 @@ export const get_tail = (b: Brick) => {
 };
 
 type Props = {
+  brick_id_to_component: {[id: string]: any},
+  data: Brick,
   styles?: any,
-  is_removing?: boolean,
   active?: boolean,
-  show_hat?: boolean,
-  offset?: {
-    x: number,
-    y: number,
-  },
-  is_ghost?: boolean,
-  output?: BrickOutput,
   is_container?: boolean,
   on_drag_start: (e: BrickDragEvent) => void,
   on_context_menu: (e: BrickDragEvent) => void,
@@ -162,8 +160,9 @@ export const for_each_brick = (
 
 class BrickComponent extends React.Component<Props, State> {
   refs = null;
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
+    props.brick_id_to_component[props.id] = this;
   }
   on_touch_start = (e: TouchEvent<HTMLDivElement>) => {
     if (this.props.is_container) {
@@ -212,7 +211,7 @@ class BrickComponent extends React.Component<Props, State> {
     const inputs = this.props.inputs.length ?
       <div
         {...events}
-        className={`${styles.inputs} ${this.props.show_hat ? styles.hat : ''}`}
+        className={`${styles.inputs} ${this.props.data.ui.show_hat ? styles.hat : ''}`}
         ref={this.props.brick_inputs_ref}
       >
         {this.props.inputs}
@@ -227,10 +226,10 @@ class BrickComponent extends React.Component<Props, State> {
       </div> : null;
     return <div
       style={{
-        marginLeft: `${this.props.offset && this.props.offset.x || 0}px`,
-        marginTop: `${this.props.offset && this.props.offset.y || 0}px`,
+        marginLeft: `${this.props.data.ui.offset && this.props.data.ui.offset.x || 0}px`,
+        marginTop: `${this.props.data.ui.offset && this.props.data.ui.offset.y || 0}px`,
       }}
-      className={`${styles.wrap} ${this.props.output ? `${styles.output} ${styles[BrickOutput[this.props.output]]}` : ''} ${this.props.is_removing ? styles.removing : ''} ${this.props.is_container ? styles.container : ''}  ${this.props.is_ghost ? styles.ghost : ''} ${this.props.active ? styles.active : ''}`}
+      className={`${styles.wrap} ${this.props.data.output ? `${styles.output} ${styles[BrickOutput[this.props.data.output]]}` : ''} ${this.props.data.ui.is_removing ? styles.removing : ''} ${this.props.is_container ? styles.container : ''}  ${this.props.data.ui.is_ghost ? styles.ghost : ''} ${this.props.active ? styles.active : ''}`}
       data-id={this.props.id}
       ref={this.props.brick_ref}
       {...this.props.children ? events : {}}
