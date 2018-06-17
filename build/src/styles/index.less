@@ -1,0 +1,48 @@
+@import './toolbox.less';
+@import './brick.less';
+
+.mask {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  display: none;
+  z-index: 12;
+}
+.maskItem {
+  position: absolute;
+}
+
+.froggyWrap {
+  font-family: sans-serif;
+  font-size: 12px;
+  user-select: none;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.froggy {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.froggyWrap input {
+  background: transparent;
+  border: 0;
+  text-align: center;
+  color: #fff;
+  height: 20px;
+}
+
+.froggyWrap select {
+  background: transparent;
+  border: none;
+  height: 20px;
+  padding: 5px;
+  color: #fff;
+}

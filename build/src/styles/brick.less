@@ -1,0 +1,181 @@
+@green: #2ecc71;
+@green-dark: #15B358;
+@blue: #55acee;
+@blue-dark: #3C93D5;
+@red: #e74c3c;
+@red-dark: #CE3323;
+@purple: #9b59b6;
+@purple-dark: #82409D;
+@orange: #e67e22;
+@orange-dark: #CD6509;
+@yellow: #f1c40f;
+@yellow-dark: #D8AB00;
+
+.froggy > .wrap {
+  position: absolute;
+}
+
+.wrap.active {
+  z-index: 11;
+}
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  width: 0px;
+  overflow-x: visible;
+  position: relative;
+}
+.inputs {
+  cursor: -webkit-grab;
+  display: inline-flex;
+  justify-content: start;
+  align-items: center;
+  padding: 5px 10px 5px 10px;
+  color: #fff;
+  min-height: 10px;
+  width: fit-content;
+  box-sizing: border-box;
+  min-width: 50px;
+  background-color: @green;
+  box-shadow: 0px 5px 0px 0px @green-dark;
+  border-bottom: 1px solid rgba(0,0,0, 0.1);
+}
+
+.inputs > div {
+  margin-left: 3px!important;
+}
+.inputs > div:first-child {
+  margin-left: 0px!important;
+}
+.inputs.hat:after {
+  content: '';
+  width: 50px;
+  height: 10px;
+  background-color: inherit;
+  border: inherit;
+  bottom: 100%;
+  position: absolute;
+}
+
+.parts {
+  position: relative;
+}
+
+@parts-indent: 15px;
+.parts > .wrap > .next {
+  margin-left: @parts-indent;
+}
+.parts:before {
+  content: '';
+  position: absolute;
+  right: calc(100%);
+  top: 0px;
+  height: calc(100% - 1px);
+  width: @parts-indent / 3;
+  box-sizing: border-box;
+  box-shadow: 0px 6px 0px 0px rgb(178, 178, 178);
+  background: #d4d3d3;
+}
+
+.container {
+  border: 1px solid #fff;
+  border-radius: 40px;
+  display: flex!important;
+  min-width: 10px;
+  min-height: 20px;
+  box-shadow: inset 0px 5px 0px 0px rgba(0, 0, 0, 0.2);
+}
+.inputs > .container:first-child {
+  margin-left: 0 !important;
+}
+.inputs > .container:last-child {
+  margin-right: 0 !important;
+}
+.container > .inputs {
+  padding: 0!important;
+  border: 0!important;
+  box-shadow: none;
+}
+.inputs > .wrap {
+  width: fit-content;
+}
+.container > .inputs .wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.output {
+  border-radius: 40px;
+  background-color: @green;
+  min-width: 30px;
+  min-height: 20px;
+  width: fit-content;
+}
+.number {
+  background-color: @blue;
+}
+.boolean {
+  background-color: @yellow;
+}
+.array {
+  background-color: @orange;
+}
+.string{
+  background-color: @purple;
+}
+
+.froggy > .output, .toolboxBricks > .output {
+  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
+}
+
+.output > .inputs {
+  padding: 2px;
+  box-shadow: none;
+  border-bottom: none;
+  min-width: 30px;
+  border-radius: inherit;
+  background: inherit;
+}
+
+.output > .inputs > div.atomicText:first-child {
+  margin-left: 5px!important;
+}
+.output > .inputs > div.atomicText:last-child {
+  margin-right: 5px!important;
+}
+
+.ghost > .inputs, .ghost > .parts:before {
+  opacity: 0.5;
+}
+
+.atomicText, .atomicParam {
+  white-space: nowrap;
+}
+.atomicTextIndent {
+  display: inline-block;
+}
+.atomicParam {
+  width: 100%;
+  height: 100%;
+  display: inline-flex;
+  color: #fff;
+  justify-content: center;
+  padding: 0 5px 0 5px;
+  box-sizing: border-box;
+  align-items: center;
+}
+
+.atomicButtonWrap {
+  position: relative;
+  height: 100%;
+  width: fit-content;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.removing {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
