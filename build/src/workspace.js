@@ -1,8 +1,8 @@
 import React from 'react';
 import styles from './styles/index.less';
 import BrickComponent from './brick';
-import { deduplicate, distance_2d, flatten, get_global_offset, } from './util';
-import { clone, for_each_brick, get_ancestor, get_tail, AtomicBrickEnum, BrickOutput, } from './brick';
+import { deduplicate, distance_2d, flatten, get_global_offset, clone, get_ancestor, for_each_brick, get_tail, } from './util';
+import { AtomicBrickEnum, BrickOutput, } from './types';
 import ContextMenu from './dummy/context_menu';
 import Input from './dummy/input';
 import Select from './dummy/select';
@@ -402,6 +402,15 @@ export default class Workspace extends React.Component {
             };
             this.workspace_on_drag_start(event);
         };
+        this.on_wheel = (e) => {
+            e.preventDefault();
+            this.froggy_offset.x -= e.deltaX;
+            this.froggy_offset.y -= e.deltaY;
+            this.froggy_ref.current.style.left = `${this.froggy_offset.x}px`;
+            this.froggy_ref.current.style.top = `${this.froggy_offset.y}px`;
+            this.toolbox_ref.current.style.left = `${-this.froggy_offset.x}px`;
+            this.toolbox_ref.current.style.top = `${-this.froggy_offset.y}px`;
+        };
         this.froggy_ref = React.createRef();
         this.toolbox_ref = React.createRef();
         this.toolbox_bricks_ref = React.createRef();
@@ -632,12 +641,12 @@ export default class Workspace extends React.Component {
         };
     }
     render() {
-        return React.createElement("div", { ref: this.froggy_wrap_ref, key: this.props.id, className: styles.froggyWrap, onMouseDown: this.on_mouse_down_middleware, onTouchStart: this.on_mouse_down_middleware, onMouseMove: this.on_mouse_move_middleware, onTouchMove: this.on_mouse_move_middleware, onMouseUp: this.on_mouse_up_middleware, onTouchEnd: this.on_mouse_up_middleware },
+        return React.createElement("div", { ref: this.froggy_wrap_ref, key: this.props.id, className: styles.froggyWrap, onMouseDown: this.on_mouse_down_middleware, onTouchStart: this.on_mouse_down_middleware, onMouseMove: this.on_mouse_move_middleware, onTouchMove: this.on_mouse_move_middleware, onMouseUp: this.on_mouse_up_middleware, onTouchEnd: this.on_mouse_up_middleware, onWheel: this.on_wheel },
             React.createElement("div", { ref: this.froggy_ref, className: styles.froggy, style: {
                     left: `${this.froggy_offset.x}px`,
                     top: `${this.froggy_offset.y}px`,
                 } },
-                React.createElement("div", { className: styles.toolbox, ref: this.toolbox_ref, onTouchStart: (e) => e.stopPropagation(), onMouseDown: (e) => e.stopPropagation(), style: {
+                React.createElement("div", { className: styles.toolbox, ref: this.toolbox_ref, onTouchStart: (e) => e.stopPropagation(), onMouseDown: (e) => e.stopPropagation(), onWheel: (e) => e.stopPropagation(), style: {
                         left: `${-this.froggy_offset.x}px`,
                         top: `${-this.froggy_offset.y}px`,
                     } },
