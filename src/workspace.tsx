@@ -4,26 +4,24 @@ import { DragEvent, MouseEvent, TouchEvent } from 'react';
 
 import styles from './styles/index.less';
 
-import BrickComponent, {
-  Brick,
-} from './brick';
+import BrickComponent from './brick';
 import {
   deduplicate,
   distance_2d,
   flatten,
-  gen_id,
   get_global_offset,
+  clone,
+  get_ancestor,
+  for_each_brick,
+  get_tail,
 } from './util';
 
 import {
-  clone,
-  for_each_brick,
-  get_ancestor,
-  get_tail,
+  Brick,
   AtomicBrickEnum,
   BrickDragEvent,
   BrickOutput,
-} from './brick';
+} from './types';
 
 import ContextMenu from './dummy/context_menu';
 import Input from './dummy/input';
@@ -745,6 +743,15 @@ export default class Workspace extends React.Component<Props, State> {
     };
     this.workspace_on_drag_start(event);
   }
+  on_wheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    this.froggy_offset.x -= e.deltaX;
+    this.froggy_offset.y -= e.deltaY;
+    this.froggy_ref.current.style.left = `${this.froggy_offset.x}px`;
+    this.froggy_ref.current.style.top = `${this.froggy_offset.y}px`;
+    this.toolbox_ref.current.style.left = `${-this.froggy_offset.x}px`;
+    this.toolbox_ref.current.style.top = `${-this.froggy_offset.y}px`;
+  }
   render() {
     return <div
       ref={this.froggy_wrap_ref}
@@ -756,6 +763,7 @@ export default class Workspace extends React.Component<Props, State> {
       onTouchMove={this.on_mouse_move_middleware}
       onMouseUp={this.on_mouse_up_middleware}
       onTouchEnd={this.on_mouse_up_middleware}
+      onWheel={this.on_wheel}
     >
       <div
         ref={this.froggy_ref}
@@ -770,6 +778,7 @@ export default class Workspace extends React.Component<Props, State> {
           ref={this.toolbox_ref}
           onTouchStart={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
+          onWheel={(e) => e.stopPropagation()}
           style={{
             left: `${-this.froggy_offset.x}px`,
             top: `${-this.froggy_offset.y}px`,
