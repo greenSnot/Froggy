@@ -8,7 +8,7 @@ import {
   clone,
   for_each_brick,
   Brick,
-} from '../../src/brick';
+} from '../../';
 
 const categories = {
   control,
