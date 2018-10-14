@@ -20,7 +20,7 @@ export default class Select extends React.Component {
                             left: offset.x,
                             top: offset.y,
                         } },
-                        React.createElement("div", { className: styles.optionWrap }, Object.keys(options).map(i => React.createElement("div", { key: i, className: `${styles.option} ${i === key ? styles.selected : ''}`, onClick: () => {
+                        React.createElement("div", { className: styles.optionWrap, onWheel: (e) => e.stopPropagation() }, Object.keys(options).map(i => React.createElement("div", { key: i, className: `${styles.option} ${i === key ? styles.selected : ''}`, onClick: () => {
                                 this.props.onChange(options[i]);
                             } }, i))))));
             } }, key);

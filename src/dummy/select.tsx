@@ -46,7 +46,10 @@ export default class Select extends React.Component<Props, State> {
               top: offset.y,
             }}
           >
-            <div className={styles.optionWrap}>
+            <div
+              className={styles.optionWrap}
+              onWheel={(e) => e.stopPropagation()}
+            >
             {Object.keys(options).map(i => <div
               key={i}
               className={`${styles.option} ${i === key ? styles.selected : ''}`}
