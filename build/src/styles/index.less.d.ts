@@ -24,4 +24,6 @@ export const atomicButtonWrap: string;
 export const removing: string;
 export const mask: string;
 export const maskItem: string;
+export const workspace: string;
+export const workspace_content: string;
 export const froggyWrap: string;

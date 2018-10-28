@@ -4,6 +4,7 @@
     "module": "es6",
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": false,
+    "experimentalDecorators": true,
     "moduleResolution": "node",
     "jsx": "react"
   },

@@ -5,6 +5,7 @@
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": false,
     "moduleResolution": "node",
+    "experimentalDecorators": true,
     "jsx": "react",
     "baseUrl": ".",
     "paths": {

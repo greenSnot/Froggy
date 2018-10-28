@@ -7,17 +7,24 @@
   },
   "scripts": {
     "build": "tsc --outDir build && mkdir -p build/src/styles && find ./src/styles -name '*.less' -exec cp -prv '{}' './build/src/styles/' ';'",
+    "watch": "tsc -w --outDir build",
     "dev": "webpack-dev-server --mode=development"
   },
   "main": "build/index.js",
   "types": "build/index.d.ts",
-  "dependencies": {},
+  "dependencies": {
+    "mobx": "^5.5.2",
+    "mobx-react": "^5.3.5",
+    "react-dom": "^16.6.0",
+    "webpack-dev-server": "^3.1.10"
+  },
   "devDependencies": {
     "@types/react": "16.3.14",
     "@types/react-dom": "^16.0.5",
     "@types/three": "^0.91.10",
     "react": "^16.0.0",
-    "typescript": "^2.8.3"
+    "typescript": "^2.8.3",
+    "webpack": "^4.22.0"
   },
   "author": "greenSnot",
   "license": "GPL-3.0"
