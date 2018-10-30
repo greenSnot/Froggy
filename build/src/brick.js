@@ -37,21 +37,28 @@ let BrickComponent = BrickComponent_1 = class BrickComponent extends Component {
         super(props);
         this.on_touch_start = (e) => {
             e.stopPropagation();
-            this.props.store.brick_on_drag_start(e, this.props.data, this.ref.current);
+            const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+            const element = this.props.store.id_to_ref[host.id].current;
+            this.props.store.brick_on_drag_start(e, host, element);
         };
         this.on_mouse_down = (e) => {
             e.stopPropagation();
-            this.props.store.brick_on_drag_start(e, this.props.data, this.ref.current);
+            const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+            const element = this.props.store.id_to_ref[host.id].current;
+            this.props.store.brick_on_drag_start(e, host, element);
         };
         this.on_context_menu = (e) => {
             e.stopPropagation();
-            this.props.store.on_context_menu(e, this.props.data, this.ref.current);
+            const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+            const element = this.props.store.id_to_ref[host.id].current;
+            this.props.store.on_context_menu(e, host, element);
         };
         this.ref = React.createRef();
     }
     render() {
         const brick = this.props.data;
         const store = this.props.store;
+        store.id_to_data[brick.id] = brick;
         let child;
         if (AtomicBrickEnum[brick.type]) {
             if (brick.type === 'atomic_text') {
@@ -104,19 +111,24 @@ let BrickComponent = BrickComponent_1 = class BrickComponent extends Component {
             child = typeToInstance[brick.type]();
         }
         const parts = brick.parts && brick.parts.length && brick.parts.map(i => React.createElement(BrickComponent_1, { key: i.id, data: i, store: store }));
-        const inputs = brick.inputs && brick.inputs.length && brick.inputs.map(i => React.createElement(BrickComponent_1, { key: i.id, data: i, store: store }));
+        if (brick.parts && brick.parts.length) {
+            brick.parts.forEach(i => store.id_to_host[i.id] = brick);
+        }
+        store.id_to_ref[brick.id] = this.ref;
+        const inputs = brick.inputs && brick.inputs.length && brick.inputs.map(i => React.createElement(BrickComponent_1, { key: i.id, data: i, store: store, is_container: true }));
+        const is_container = this.props.is_container;
         const next = brick.next && React.createElement(BrickComponent_1, { key: brick.next.id, data: brick.next, store: store });
+        if (brick.next) {
+            store.id_to_prev[brick.next.id] = brick;
+        }
         const active = brick === store.active_brick;
-        const class_name = `${styles.wrap} ${brick.output ? `${styles.output} ${styles[BrickOutput[brick.output]]}` : ''} ${brick.ui.is_removing ? styles.removing : ''} ${is_container(brick) ? styles.container : ''}  ${brick.ui.is_ghost ? styles.ghost : ''} ${active ? styles.active : ''}`;
+        const class_name = `${styles.wrap} ${brick.output ? `${styles.output} ${styles[BrickOutput[brick.output]]}` : ''} ${brick.ui.is_removing ? styles.removing : ''} ${is_container ? styles.container : ''}  ${brick.ui.is_ghost ? styles.ghost : ''} ${active ? styles.active : ''}`;
         const events = {
             onTouchStart: this.on_touch_start,
             onMouseDown: this.on_mouse_down,
             onContextMenu: this.on_context_menu,
         };
-        return (React.createElement("div", Object.assign({ className: class_name, ref: this.ref, key: brick.id }, child ? events : {}, { style: {
-                marginLeft: `${brick.ui.offset && brick.ui.offset.x || 0}px`,
-                marginTop: `${brick.ui.offset && brick.ui.offset.y || 0}px`,
-            } }),
+        return (React.createElement("div", Object.assign({ className: class_name, "data-id": brick.id, ref: this.ref, key: brick.id }, child ? events : {}),
             parts ? React.createElement("div", { className: styles.parts }, parts) : null,
             inputs ? React.createElement("div", Object.assign({}, events, { className: `${styles.inputs} ${brick.ui.show_hat ? styles.hat : ''}` }), inputs) : null,
             next ? React.createElement("div", { className: styles.next }, next) : null,

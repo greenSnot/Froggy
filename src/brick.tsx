@@ -47,6 +47,7 @@ export class RootBrickComponent extends Component<{
 class BrickComponent extends Component<{
   data: Brick,
   store: WorkspaceStore,
+  is_container?,
 }, {}> {
   ref;
   constructor(props) {
@@ -55,19 +56,26 @@ class BrickComponent extends Component<{
   }
   on_touch_start = (e: TouchEvent<HTMLElement>) => {
     e.stopPropagation();
-    this.props.store.brick_on_drag_start(e, this.props.data, this.ref.current);
+    const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+    const element = this.props.store.id_to_ref[host.id].current;
+    this.props.store.brick_on_drag_start(e, host, element);
   }
   on_mouse_down = (e: MouseEvent<HTMLElement>) => {
     e.stopPropagation();
-    this.props.store.brick_on_drag_start(e, this.props.data, this.ref.current);
+    const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+    const element = this.props.store.id_to_ref[host.id].current;
+    this.props.store.brick_on_drag_start(e, host, element);
   }
   on_context_menu = (e) => {
     e.stopPropagation();
-    this.props.store.on_context_menu(e, this.props.data, this.ref.current);
+    const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+    const element = this.props.store.id_to_ref[host.id].current;
+    this.props.store.on_context_menu(e, host, element);
   }
   render() {
     const brick = this.props.data;
     const store = this.props.store;
+    store.id_to_data[brick.id] = brick;
     let child;
     if (AtomicBrickEnum[brick.type]) {
       if (brick.type === 'atomic_text') {
@@ -126,10 +134,18 @@ class BrickComponent extends Component<{
     }
 
     const parts = brick.parts && brick.parts.length && brick.parts.map(i => <BrickComponent key={i.id} data={i} store={store}/>);
-    const inputs = brick.inputs && brick.inputs.length && brick.inputs.map(i => <BrickComponent key={i.id} data={i} store={store}/>);
+    if (brick.parts && brick.parts.length) {
+      brick.parts.forEach(i => store.id_to_host[i.id] = brick);
+    }
+    store.id_to_ref[brick.id] = this.ref;
+    const inputs = brick.inputs && brick.inputs.length && brick.inputs.map(i => <BrickComponent key={i.id} data={i} store={store} is_container={true}/>);
+    const is_container = this.props.is_container;
     const next = brick.next && <BrickComponent key={brick.next.id} data={brick.next} store={store}/>;
+    if (brick.next) {
+      store.id_to_prev[brick.next.id] = brick;
+    }
     const active = brick === store.active_brick;
-    const class_name = `${styles.wrap} ${brick.output ? `${styles.output} ${styles[BrickOutput[brick.output]]}` : ''} ${brick.ui.is_removing ? styles.removing : ''} ${is_container(brick) ? styles.container : ''}  ${brick.ui.is_ghost ? styles.ghost : ''} ${active ? styles.active : ''}`;
+    const class_name = `${styles.wrap} ${brick.output ? `${styles.output} ${styles[BrickOutput[brick.output]]}` : ''} ${brick.ui.is_removing ? styles.removing : ''} ${is_container ? styles.container : ''}  ${brick.ui.is_ghost ? styles.ghost : ''} ${active ? styles.active : ''}`;
     const events = {
       onTouchStart: this.on_touch_start,
       onMouseDown: this.on_mouse_down,
@@ -138,13 +154,10 @@ class BrickComponent extends Component<{
     return (
       <div
         className={class_name}
+        data-id={brick.id}
         ref={this.ref}
         key={brick.id}
         {...child ? events : {}}
-        style={{
-          marginLeft: `${brick.ui.offset && brick.ui.offset.x || 0}px`,
-          marginTop: `${brick.ui.offset && brick.ui.offset.y || 0}px`,
-        }}
       >
         {parts ? <div className={styles.parts}>
           {parts}

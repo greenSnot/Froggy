@@ -11,10 +11,6 @@
 @yellow: #f1c40f;
 @yellow-dark: #D8AB00;
 
-.froggy > .wrap {
-  position: absolute;
-}
-
 .wrap.active {
   z-index: 11;
 }
@@ -125,7 +121,7 @@
   background-color: @purple;
 }
 
-.froggy > .output, .toolboxBricks > .output {
+.root_brick > .output, .toolboxBricks > .output {
   border-bottom: 5px solid rgba(0, 0, 0, 0.2);
 }
 
@@ -181,5 +177,5 @@
 }
 
 .root_brick {
-
+  position: absolute;
 }

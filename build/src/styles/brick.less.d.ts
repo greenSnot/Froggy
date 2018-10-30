@@ -1,4 +1,3 @@
-export const froggy: string;
 export const wrap: string;
 export const active: string;
 export const inputs: string;
@@ -11,6 +10,7 @@ export const number: string;
 export const boolean: string;
 export const array: string;
 export const string: string;
+export const root_brick: string;
 export const toolboxBricks: string;
 export const atomicText: string;
 export const ghost: string;
