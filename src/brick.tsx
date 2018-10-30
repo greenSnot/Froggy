@@ -20,8 +20,6 @@ import {
   BrickDragEvent,
 } from './types';
 
-const is_container = (brick) => brick.type === 'container';
-
 @observer
 export class RootBrickComponent extends Component<{
   data: Brick,
@@ -54,21 +52,24 @@ class BrickComponent extends Component<{
     super(props);
     this.ref = React.createRef();
   }
+  componentDidUpdate() {
+    this.props.store.id_to_offset[this.props.data.id] = get_global_offset(this.ref.current, this.props.store.workspace_ref.current);
+  }
   on_touch_start = (e: TouchEvent<HTMLElement>) => {
     e.stopPropagation();
-    const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+    const host = this.props.data.output === BrickOutput.void ? this.props.store.id_to_host[this.props.data.id] : this.props.data;
     const element = this.props.store.id_to_ref[host.id].current;
     this.props.store.brick_on_drag_start(e, host, element);
   }
   on_mouse_down = (e: MouseEvent<HTMLElement>) => {
     e.stopPropagation();
-    const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+    const host = this.props.data.output === BrickOutput.void ? this.props.store.id_to_host[this.props.data.id] : this.props.data;
     const element = this.props.store.id_to_ref[host.id].current;
     this.props.store.brick_on_drag_start(e, host, element);
   }
   on_context_menu = (e) => {
     e.stopPropagation();
-    const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+    const host = this.props.data.output === BrickOutput.void ? this.props.store.id_to_host[this.props.data.id] : this.props.data;
     const element = this.props.store.id_to_ref[host.id].current;
     this.props.store.on_context_menu(e, host, element);
   }
@@ -139,6 +140,9 @@ class BrickComponent extends Component<{
     }
     store.id_to_ref[brick.id] = this.ref;
     const inputs = brick.inputs && brick.inputs.length && brick.inputs.map(i => <BrickComponent key={i.id} data={i} store={store} is_container={true}/>);
+    if (brick.inputs) {
+      brick.inputs.forEach(i => store.id_to_host[i.id] = brick);
+    }
     const is_container = this.props.is_container;
     const next = brick.next && <BrickComponent key={brick.next.id} data={brick.next} store={store}/>;
     if (brick.next) {

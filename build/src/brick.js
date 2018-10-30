@@ -12,7 +12,6 @@ import { get_global_offset } from './util';
 import Input from './dummy/input';
 import Select from './dummy/select';
 import { AtomicBrickEnum, BrickOutput, } from './types';
-const is_container = (brick) => brick.type === 'container';
 let RootBrickComponent = class RootBrickComponent extends Component {
     constructor(props) {
         super(props);
@@ -37,23 +36,26 @@ let BrickComponent = BrickComponent_1 = class BrickComponent extends Component {
         super(props);
         this.on_touch_start = (e) => {
             e.stopPropagation();
-            const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+            const host = this.props.data.output === BrickOutput.void ? this.props.store.id_to_host[this.props.data.id] : this.props.data;
             const element = this.props.store.id_to_ref[host.id].current;
             this.props.store.brick_on_drag_start(e, host, element);
         };
         this.on_mouse_down = (e) => {
             e.stopPropagation();
-            const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+            const host = this.props.data.output === BrickOutput.void ? this.props.store.id_to_host[this.props.data.id] : this.props.data;
             const element = this.props.store.id_to_ref[host.id].current;
             this.props.store.brick_on_drag_start(e, host, element);
         };
         this.on_context_menu = (e) => {
             e.stopPropagation();
-            const host = this.props.store.id_to_host[this.props.data.id] || this.props.data;
+            const host = this.props.data.output === BrickOutput.void ? this.props.store.id_to_host[this.props.data.id] : this.props.data;
             const element = this.props.store.id_to_ref[host.id].current;
             this.props.store.on_context_menu(e, host, element);
         };
         this.ref = React.createRef();
+    }
+    componentDidUpdate() {
+        this.props.store.id_to_offset[this.props.data.id] = get_global_offset(this.ref.current, this.props.store.workspace_ref.current);
     }
     render() {
         const brick = this.props.data;
@@ -116,6 +118,9 @@ let BrickComponent = BrickComponent_1 = class BrickComponent extends Component {
         }
         store.id_to_ref[brick.id] = this.ref;
         const inputs = brick.inputs && brick.inputs.length && brick.inputs.map(i => React.createElement(BrickComponent_1, { key: i.id, data: i, store: store, is_container: true }));
+        if (brick.inputs) {
+            brick.inputs.forEach(i => store.id_to_host[i.id] = brick);
+        }
         const is_container = this.props.is_container;
         const next = brick.next && React.createElement(BrickComponent_1, { key: brick.next.id, data: brick.next, store: store });
         if (brick.next) {
