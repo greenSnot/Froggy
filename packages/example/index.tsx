@@ -1,6 +1,4 @@
 import React from 'react';
-window['r1']=React;
-console.log('##', '#', window['r1'] == window['r2'])
 import {createRoot} from 'react-dom/client';
 
 import { Brick, Workspace } from 'froggy';

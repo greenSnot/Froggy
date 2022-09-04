@@ -1,5 +1,4 @@
 import React, { ReactElement, ReactHTMLElement, useCallback, useEffect } from 'react';
-window['r2'] = React
 import { DragEvent, MouseEvent, TouchEvent } from 'react';
 
 import styles from './styles/index.less';
