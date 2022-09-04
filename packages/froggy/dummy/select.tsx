@@ -16,7 +16,7 @@ type Props = {
     y: number,
   },
 };
-const Select = ({onChange,show,hide,offset,value, options}:Props)=> {
+const Select = ({ onChange, show, hide, offset, value, options }: Props) => {
   let key;
   Object.keys(options).forEach((i) => {
     if (options[i] === value) {
@@ -70,6 +70,6 @@ const Select = ({onChange,show,hide,offset,value, options}:Props)=> {
       {key}
     </div>
   );
-}
+};
 
 export default Select;

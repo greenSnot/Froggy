@@ -117,4 +117,6 @@ export const is_procedure_def = (brick: Brick) => brick.type === 'procedure_def'
 export const is_procedure = (brick: Brick) => brick.type === 'procedure';
 export const is_procedure_with_output = (brick: Brick) => brick.type === 'procedure_with_output';
 export const is_procedure_return = (brick: Brick) => brick.type === 'procedure_return';
-export const get_id = (brick: Brick) => brick.path.join('-');
+export const get_id = (brick: Brick) => {
+ return brick.id || brick.path.join('-');
+}

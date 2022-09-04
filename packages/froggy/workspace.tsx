@@ -24,6 +24,7 @@ import {
 } from './types';
 
 import { useWorkspaceEvents } from './workspace_events';
+import { Context } from './context';
 
 type Props = {
   id: string,
@@ -310,65 +311,70 @@ const Workspace = ({
     initial_blocks_offset: { x: 0, y: 0 },
   });
 
+
   return (
-    <div
-      className={styles.froggyWrap}
-      ref={workspace_ref}
+    <Context.Provider
+      value={{
+        atomic_button_fns,
+        atomic_dropdown_menu,
+      }}
     >
-      <div
-        ref={froggy_ref}
-        className={styles.froggy}
-        style={{
-          left: `${blocks_offset.x}px`,
-          top: `${blocks_offset.y}px`,
-        }}
-      >
+      <div className={styles.froggyWrap} ref={workspace_ref}>
         <div
-          className={styles.toolbox}
-          ref={toolbox_ref}
-          onTouchStart={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onWheel={(e) => e.stopPropagation()}
+          ref={froggy_ref}
+          className={styles.froggy}
           style={{
-            left: `${-blocks_offset.x}px`,
-            top: `${-blocks_offset.y}px`,
+            left: `${blocks_offset.x}px`,
+            top: `${blocks_offset.y}px`,
           }}
         >
-          <div className={styles.categories}>
-            {Object.keys(toolbox.categories).map((i) => (
-              <div
-                key={i}
-                onClick={() => {
-                  // toolbox.activeCategory = i;
-                  // update();
-                }}
-                className={`${styles.category} ${
-                  i === toolbox.activeCategory ? styles.activeCategory : ""
-                }`}
-              >
-                {i}
-              </div>
-            ))}
+          <div
+            className={styles.toolbox}
+            ref={toolbox_ref}
+            onTouchStart={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+            style={{
+              left: `${-blocks_offset.x}px`,
+              top: `${-blocks_offset.y}px`,
+            }}
+          >
+            <div className={styles.categories}>
+              {Object.keys(toolbox.categories).map((i) => (
+                <div
+                  key={i}
+                  onClick={() => {
+                    // toolbox.activeCategory = i;
+                    // update();
+                  }}
+                  className={`${styles.category} ${
+                    i === toolbox.activeCategory ? styles.activeCategory : ""
+                  }`}
+                >
+                  {i}
+                </div>
+              ))}
+            </div>
+            <div className={styles.toolboxBricks} ref={toolbox_bricks_ref}>
+              {toolbox.categories[toolbox.activeCategory].map((i) => (
+                <BrickComponent key={i.id} data={i} />
+              ))}
+            </div>
           </div>
-          <div className={styles.toolboxBricks} ref={toolbox_bricks_ref}>
-            {toolbox.categories[toolbox.activeCategory].map((i) => (
-              <BrickComponent key={get_id(i)} data={i} />
-            ))}
-          </div>
+          {root_bricks.map((i) => (
+            <BrickComponent key={get_id(i)} data={i} />
+          ))}
         </div>
-        {root_bricks.map((i) => (
-          <BrickComponent key={get_id(i)} data={i} />
-        ))}
+        <div
+          className={styles.mask}
+          style={{
+            display: mask_data.visibility ? "block" : "none",
+          }}
+        >
+          {mask_data.content}
+        </div>
       </div>
-      <div
-        className={styles.mask}
-        style={{
-          display: mask_data.visibility ? "block" : "none",
-        }}
-      >
-        {mask_data.content}
-      </div>
-    </div>
+    </Context.Provider>
   );
 }
 

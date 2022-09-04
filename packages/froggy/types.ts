@@ -24,6 +24,7 @@ export enum AtomicBrickEnum {
 }
 
 export type RuntimeBrick = {
+  id?: string,
   path?: string[],
   type: string,
   root?: BrickId,

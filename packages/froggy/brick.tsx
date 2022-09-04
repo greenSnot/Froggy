@@ -12,6 +12,7 @@ import {
 } from "./types";
 import styles from "./styles/brick.less";
 import { get_id, is_container } from "./util";
+import { Context } from "./context";
 
 type Props = {
   data: Brick;
@@ -24,7 +25,7 @@ const BrickComponent = ({ data }: Props) => {
 
   const on_drag_start: (e: BrickDragEvent) => void = () => {};
   const on_context_menu: (e: BrickDragEvent) => void = () => {};
-  const atomic_dropdown_menu: { [id: string]: { [name: string]: any } } = {};
+  const { atomic_dropdown_menu } = useContext(Context);
 
   const on_touch_start = useCallback(
     (e: TouchEvent<HTMLDivElement>) => {
@@ -188,7 +189,7 @@ const BrickComponent = ({ data }: Props) => {
       ))}
     </div>
   ) : null;
-  const parts_el = data.parts.length ? (
+  const parts_el = data.parts && data.parts.length ? (
     <div className={styles.parts}>
       {data.parts.map((i) => (
         <BrickComponent data={i} key={get_id(i)} />
