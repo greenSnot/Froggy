@@ -2,7 +2,6 @@ import { Brick, BrickOutput } from 'froggy';
 
 const bricks: Brick[] = [
   {
-    id: 'event_run_on_click',
     type: 'event_run_on_click',
     is_root: true,
     inputs: [

@@ -24,7 +24,7 @@ export enum AtomicBrickEnum {
 }
 
 export type RuntimeBrick = {
-  id?: BrickId,
+  path?: string[],
   type: string,
   root?: BrickId,
   is_root?: boolean,
@@ -50,8 +50,14 @@ export type Brick = RuntimeBrick & {
       x: number,
       y: number,
     },
+    delegate?: Brick,
     is_toolbox_brick?: boolean,
     value?: any, // output value
     dropdown?: string, // dropdown
   },
+};
+
+export type Offset = {
+  x: number;
+  y: number;
 };

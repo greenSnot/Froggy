@@ -104,10 +104,17 @@ export const for_each_brick = (
     cb(brick);
     range.inputs && brick.inputs && brick.inputs.forEach(i => for_each_child_brick(i));
     range.parts && brick.parts && brick.parts.forEach(i => for_each_child_brick(i));
-    if (tail && brick.id === tail.id) {
+    if (tail && get_id(brick) === get_id(tail)) {
       return;
     }
     range.next && brick.next && for_each_child_brick(brick.next);
   };
   for_each_child_brick(b);
 };
+
+export const is_container = (brick: Brick) => brick.type === 'container';
+export const is_procedure_def = (brick: Brick) => brick.type === 'procedure_def';
+export const is_procedure = (brick: Brick) => brick.type === 'procedure';
+export const is_procedure_with_output = (brick: Brick) => brick.type === 'procedure_with_output';
+export const is_procedure_return = (brick: Brick) => brick.type === 'procedure_return';
+export const get_id = (brick: Brick) => brick.path.join('-');

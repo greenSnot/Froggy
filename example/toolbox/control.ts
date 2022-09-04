@@ -4,7 +4,6 @@ import { atomicButtonAdd, atomicButtonRemove } from './styles/button.less';
 
 const bricks: Brick[] = [
   {
-    id: 'if',
     type: 'control_if',
     is_root: true,
     next: null,

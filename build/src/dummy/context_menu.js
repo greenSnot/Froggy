@@ -1,15 +1,13 @@
 import React from 'react';
 import styles from '../styles/dummy.less';
-export default class Input extends React.Component {
-    render() {
-        const data = this.props.menu;
-        return React.createElement("div", { className: styles.dummyWrap, onClick: this.props.blank_on_click },
-            React.createElement("div", { className: styles.contextMenu, style: {
-                    left: this.props.offset.x,
-                    top: this.props.offset.y,
-                } }, Object.keys(data).map(i => (React.createElement("div", { className: styles.contextMenuItem, key: i, onClick: (e) => {
-                    e.stopPropagation();
-                    data[i]();
-                } }, i)))));
-    }
-}
+const ContextMenu = ({ blank_on_click, menu, offset }) => {
+    return (React.createElement("div", { className: styles.dummyWrap, onClick: blank_on_click },
+        React.createElement("div", { className: styles.contextMenu, style: {
+                left: offset.x,
+                top: offset.y,
+            } }, Object.keys(menu).map((i) => (React.createElement("div", { className: styles.contextMenuItem, key: i, onClick: (e) => {
+                e.stopPropagation();
+                menu[i]();
+            } }, i))))));
+};
+export default ContextMenu;

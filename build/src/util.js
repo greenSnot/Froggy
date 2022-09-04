@@ -35,9 +35,9 @@ export const clone = (brick, with_ui = true) => {
     const do_clone = (b, prev, parent = undefined) => {
         const id = gen_id();
         root = root || id;
-        const res = Object.assign({}, b, { parts: b.parts ? b.parts.map(i => do_clone(i, undefined, id)) : undefined, inputs: b.inputs ? b.inputs.map(i => do_clone(i, undefined, id)) : undefined, root, prev: b.output ? undefined : prev, id });
+        const res = Object.assign(Object.assign({}, b), { parts: b.parts ? b.parts.map(i => do_clone(i, undefined, id)) : undefined, inputs: b.inputs ? b.inputs.map(i => do_clone(i, undefined, id)) : undefined, root, prev: b.output ? undefined : prev, id });
         if (with_ui) {
-            res.ui = Object.assign({}, b.ui, { parent: parent, delegate: b.output ? undefined : parent });
+            res.ui = Object.assign(Object.assign({}, b.ui), { parent: parent, delegate: b.output ? undefined : parent });
             delete res.ui.is_toolbox_brick;
             delete res.ui.is_removing;
             delete res.ui.is_ghost;
@@ -72,10 +72,16 @@ export const for_each_brick = (b, tail, cb, range = {
         cb(brick);
         range.inputs && brick.inputs && brick.inputs.forEach(i => for_each_child_brick(i));
         range.parts && brick.parts && brick.parts.forEach(i => for_each_child_brick(i));
-        if (tail && brick.id === tail.id) {
+        if (tail && get_id(brick) === get_id(tail)) {
             return;
         }
         range.next && brick.next && for_each_child_brick(brick.next);
     };
     for_each_child_brick(b);
 };
+export const is_container = (brick) => brick.type === 'container';
+export const is_procedure_def = (brick) => brick.type === 'procedure_def';
+export const is_procedure = (brick) => brick.type === 'procedure';
+export const is_procedure_with_output = (brick) => brick.type === 'procedure_with_output';
+export const is_procedure_return = (brick) => brick.type === 'procedure_return';
+export const get_id = (brick) => brick.path.join('-');

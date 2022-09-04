@@ -11,35 +11,33 @@ type Props = {
   },
 };
 type State = {};
-export default class Input extends React.Component<Props, State> {
-  render() {
-    const data = this.props.menu;
-    return <div
-      className={styles.dummyWrap}
-      onClick={this.props.blank_on_click}
-    >
+const ContextMenu  = ({
+  blank_on_click,menu,offset
+}:Props)=> {
+  return (
+    <div className={styles.dummyWrap} onClick={blank_on_click}>
       <div
         className={styles.contextMenu}
         style={{
-          left: this.props.offset.x,
-          top: this.props.offset.y,
+          left: offset.x,
+          top: offset.y,
         }}
       >
-        {
-          Object.keys(data).map(i => (
-            <div
-              className={styles.contextMenuItem}
-              key={i}
-              onClick={(e) => {
-                e.stopPropagation();
-                data[i]();
-              }}
-            >
-              {i}
-            </div>
-          ))
-        }
+        {Object.keys(menu).map((i) => (
+          <div
+            className={styles.contextMenuItem}
+            key={i}
+            onClick={(e) => {
+              e.stopPropagation();
+              menu[i]();
+            }}
+          >
+            {i}
+          </div>
+        ))}
       </div>
-    </div>;
-  }
+    </div>
+  );
 }
+
+export default ContextMenu;

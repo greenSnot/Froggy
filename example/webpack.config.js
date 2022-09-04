@@ -38,7 +38,7 @@ module.exports = env => ({
   resolve: {
     extensions: [".ts", ".tsx", ".js"],
     alias: {
-      froggy: path.resolve(__dirname, '../'),
+      froggy: path.resolve(__dirname, '../index.ts'),
     },
   },
   plugins: [

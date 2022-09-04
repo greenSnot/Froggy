@@ -16,51 +16,60 @@ type Props = {
     y: number,
   },
 };
-type State = {
-  value: any,
-};
-export default class Select extends React.Component<Props, State> {
-  render() {
-    const { options, value } = this.props;
-    let key;
-    Object.keys(options).forEach(i => {
-      if (options[i] === value) {
-        key = i;
-      }
-    });
-    return <div className={styles.selectValue} onClick={(e) => {
-      e.stopPropagation();
-      const offset = this.props.offset();
-      this.props.show(
-        <div
-          className={styles.dummyWrap}
-          onClick={(e) => {
-            e.stopPropagation();
-            this.props.hide();
-          }}
-        >
+const Select = ({onChange,show,hide,offset,value, options}:Props)=> {
+  let key;
+  Object.keys(options).forEach((i) => {
+    if (options[i] === value) {
+      key = i;
+    }
+  });
+  return (
+    <div
+      className={styles.selectValue}
+      onClick={(e) => {
+        e.stopPropagation();
+        const offset_ = offset();
+        show(
           <div
-            className={styles.select}
-            style={{
-              left: offset.x,
-              top: offset.y,
+            className={styles.dummyWrap}
+            onClick={(e) => {
+              e.stopPropagation();
+              hide();
             }}
           >
             <div
-              className={styles.optionWrap}
-              onWheel={(e) => e.stopPropagation()}
-            >
-            {Object.keys(options).map(i => <div
-              key={i}
-              className={`${styles.option} ${i === key ? styles.selected : ''}`}
-              onClick={() => {
-                this.props.onChange(options[i]);
+              className={styles.select}
+              style={{
+                left: offset_.x,
+                top: offset_.y,
               }}
-            >{i}</div>)}
+            >
+              <div
+                className={styles.optionWrap}
+                onWheel={(e) => e.stopPropagation()}
+              >
+                {Object.keys(options).map((i) => (
+                  <div
+                    key={i}
+                    className={`${styles.option} ${
+                      i === key ? styles.selected : ""
+                    }`}
+                    onClick={() => {
+                      onChange(options[i]);
+                    }}
+                  >
+                    {i}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>,
-      );
-    }}>{key}</div>;
-  }
+        );
+      }}
+    >
+      {key}
+    </div>
+  );
 }
+
+export default Select;

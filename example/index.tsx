@@ -1,8 +1,7 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-
-import injectTapEventPlugin from 'react-tap-event-plugin';
-injectTapEventPlugin();
+window['r1']=React;
+console.log('##', '#', window['r1'] == window['r2'])
+import {createRoot} from 'react-dom/client';
 
 import { Brick, Workspace } from 'froggy';
 
@@ -18,7 +17,7 @@ const load = () => JSON.parse(localStorage.getItem(storage_key) || '[]');
 const root_bricks = load();
 console.log(toolbox);
 console.log(root_bricks);
-ReactDOM.render(
+createRoot(document.getElementById("main")).render(
   <Workspace
     id="a"
     root_bricks={root_bricks}
@@ -26,5 +25,5 @@ ReactDOM.render(
     atomic_dropdown_menu={atomic_dropdown_menu}
     toolbox={toolbox}
     workspace_on_change={(bricks: Brick[]) => save(bricks)}
-  />,
-  document.getElementById('main'));
+  />
+);

@@ -33,7 +33,6 @@ const bricks: Brick[] = [
     ],
   },
   {
-    id: 'math',
     type: 'operator_math',
     output: BrickOutput.number,
     is_root: true,
