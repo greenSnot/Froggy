@@ -3,6 +3,8 @@ import { DragEvent, MouseEvent, TouchEvent } from 'react';
 
 import styles from './styles/index.less';
 
+import { Provider } from 'react-redux';
+import { store } from './app/store';
 import BrickComponent from './brick';
 import { get_id, is_container, is_procedure_def, is_procedure_return } from './util';
 import {
@@ -313,68 +315,74 @@ const Workspace = ({
 
 
   return (
-    <Context.Provider
-      value={{
-        atomic_button_fns,
-        atomic_dropdown_menu,
-      }}
-    >
-      <div className={styles.froggyWrap} ref={workspace_ref}>
-        <div
-          ref={froggy_ref}
-          className={styles.froggy}
-          style={{
-            left: `${blocks_offset.x}px`,
-            top: `${blocks_offset.y}px`,
+    <React.StrictMode>
+      <Provider store={store}>
+        <Context.Provider
+          value={{
+            atomic_button_fns,
+            atomic_dropdown_menu,
           }}
         >
-          <div
-            className={styles.toolbox}
-            ref={toolbox_ref}
-            onTouchStart={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onWheel={(e) => e.stopPropagation()}
-            style={{
-              left: `${-blocks_offset.x}px`,
-              top: `${-blocks_offset.y}px`,
-            }}
-          >
-            <div className={styles.categories}>
-              {Object.keys(toolbox.categories).map((i) => (
-                <div
-                  key={i}
-                  onClick={() => {
-                    // toolbox.activeCategory = i;
-                    // update();
-                  }}
-                  className={`${styles.category} ${
-                    i === toolbox.activeCategory ? styles.activeCategory : ""
-                  }`}
-                >
-                  {i}
+          <div className={styles.froggyWrap} ref={workspace_ref}>
+            <div
+              ref={froggy_ref}
+              className={styles.froggy}
+              style={{
+                left: `${blocks_offset.x}px`,
+                top: `${blocks_offset.y}px`,
+              }}
+            >
+              <div
+                className={styles.toolbox}
+                ref={toolbox_ref}
+                onTouchStart={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onWheel={(e) => e.stopPropagation()}
+                style={{
+                  left: `${-blocks_offset.x}px`,
+                  top: `${-blocks_offset.y}px`,
+                }}
+              >
+                <div className={styles.categories}>
+                  {Object.keys(toolbox.categories).map((i) => (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        // toolbox.activeCategory = i;
+                        // update();
+                      }}
+                      className={`${styles.category} ${
+                        i === toolbox.activeCategory
+                          ? styles.activeCategory
+                          : ""
+                      }`}
+                    >
+                      {i}
+                    </div>
+                  ))}
                 </div>
+                <div className={styles.toolboxBricks} ref={toolbox_bricks_ref}>
+                  {toolbox.categories[toolbox.activeCategory].map((i) => (
+                    <BrickComponent key={i.id} data={i} />
+                  ))}
+                </div>
+              </div>
+              {root_bricks.map((i) => (
+                <BrickComponent key={get_id(i)} data={i} />
               ))}
             </div>
-            <div className={styles.toolboxBricks} ref={toolbox_bricks_ref}>
-              {toolbox.categories[toolbox.activeCategory].map((i) => (
-                <BrickComponent key={i.id} data={i} />
-              ))}
+            <div
+              className={styles.mask}
+              style={{
+                display: mask_data.visibility ? "block" : "none",
+              }}
+            >
+              {mask_data.content}
             </div>
           </div>
-          {root_bricks.map((i) => (
-            <BrickComponent key={get_id(i)} data={i} />
-          ))}
-        </div>
-        <div
-          className={styles.mask}
-          style={{
-            display: mask_data.visibility ? "block" : "none",
-          }}
-        >
-          {mask_data.content}
-        </div>
-      </div>
-    </Context.Provider>
+        </Context.Provider>
+      </Provider>
+    </React.StrictMode>
   );
 }
 

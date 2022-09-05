@@ -1,7 +1,7 @@
 import React, { ReactElement, useCallback, useContext, useRef } from "react";
-import ContextMenu from "./dummy/context_menu";
-import Input from "./dummy/input";
-import Select from "./dummy/select";
+import ContextMenu from "../dummy/context_menu";
+import Input from "../dummy/input";
+import Select from "../dummy/select";
 import { DragEvent, MouseEvent, TouchEvent } from "react";
 import {
   Brick,
@@ -9,10 +9,10 @@ import {
   BrickId,
   BrickDragEvent,
   AtomicBrickEnum,
-} from "./types";
-import styles from "./styles/brick.less";
-import { get_id, is_container } from "./util";
-import { Context } from "./context";
+} from "../types";
+import styles from "../styles/brick.less";
+import { get_id, is_container } from "../util";
+import { Context } from "../context";
 
 type Props = {
   data: Brick;
