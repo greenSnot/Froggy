@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import Workspace from '../workspace';
+import WorkspaceWrap from '../workspace';
 
 import styles from '../styles/dummy.less';
 

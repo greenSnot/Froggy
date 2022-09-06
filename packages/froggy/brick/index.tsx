@@ -25,7 +25,7 @@ const BrickComponent = ({ data }: Props) => {
 
   const on_drag_start: (e: BrickDragEvent) => void = () => {};
   const on_context_menu: (e: BrickDragEvent) => void = () => {};
-  const { atomic_dropdown_menu } = useContext(Context);
+  const { atomic_dropdown_menu, atomic_button_fns } = useContext(Context);
 
   const on_touch_start = useCallback(
     (e: TouchEvent<HTMLDivElement>) => {
@@ -73,9 +73,10 @@ const BrickComponent = ({ data }: Props) => {
     [on_context_menu, id, self_is_container]
   );
 
+  let atomic_el = null;
   if (AtomicBrickEnum[data.type]) {
     if (data.type === "atomic_text") {
-      return (
+      atomic_el = (
         <div key={id} className={styles.atomicText}>
           {data.ui.value[0] === " " ? (
             <div className={styles.atomicTextIndent} />
@@ -83,94 +84,95 @@ const BrickComponent = ({ data }: Props) => {
           {data.ui.value}
         </div>
       );
-    }
-    const basic_fns = {
-      onChange: (value) => {
-        if (data.output === BrickOutput.number) {
-          data.ui.value = parseFloat(value) || 0;
-        } else {
-          data.ui.value = value;
-        }
-        return data.ui.value;
-      },
-      show: (content, cb?) => {
-        // workspace.mask_data.content = content;
-        // workspace.mask_data.visibility = true;
-        // workspace.mask_data.brick_id = brick.id;
-      },
-      hide: () => {
-        // workspace.mask_data.visibility = false;
-        // workspace.mask_data.brick_id = undefined;
-        // workspace.update();
-      },
-    };
-    const select_fns = {
-      ...basic_fns,
-      offset: () => {
-        // const offset = get_global_offset(
-        //   workspace.brick_refs[brick.id].current
-        // );
-        // offset.y += 40;
-        // return offset;
-        return { x: 0, y: 0 };
-      },
-    };
-    const input_fns = {
-      ...basic_fns,
-      offset: () => {
-        // const offset = get_global_offset(
-        //   workspace.brick_refs[brick.id].current
-        // );
-        // offset.x++;
-        // offset.y++;
-        // return offset;
-        return { x: 0, y: 0 };
-      },
-    };
-    const typeToInstance = {
-      atomic_input_string: () => (
-        <Input
-          value={data.ui.value.toString()}
-          {...input_fns}
-          editing={
-            false
-            // workspace.mask_data.visibility &&
-            // workspace.mask_data.brick_id === brick.id
+    } else {
+      const basic_fns = {
+        onChange: (value) => {
+          if (data.output === BrickOutput.number) {
+            data.ui.value = parseFloat(value) || 0;
+          } else {
+            data.ui.value = value;
           }
-        />
-      ),
-      atomic_input_number: () => typeToInstance.atomic_input_string(),
-      atomic_dropdown: () => (
-        <Select
-          value={data.ui.value}
-          options={atomic_dropdown_menu[data.ui.dropdown]}
-          {...select_fns}
-        />
-      ),
-      atomic_boolean: () => typeToInstance.atomic_dropdown(),
-      atomic_button: () => (
-        <div key={id} className={styles.atomicButtonWrap}>
-          <div
-            className={data.ui.className}
-            onClick={(e) => {
-              e.stopPropagation();
-              // atomic_button_fns[brick.ui.value](
-              //   workspace.brick_id_to_data,
-              //   brick,
-              //   () =>
-              //     workspace.update(() => workspace.root_bricks_on_change())
-              // );
-            }}
+          return data.ui.value;
+        },
+        show: (content, cb?) => {
+          // workspace.mask_data.content = content;
+          // workspace.mask_data.visibility = true;
+          // workspace.mask_data.brick_id = brick.id;
+        },
+        hide: () => {
+          // workspace.mask_data.visibility = false;
+          // workspace.mask_data.brick_id = undefined;
+          // workspace.update();
+        },
+      };
+      const select_fns = {
+        ...basic_fns,
+        offset: () => {
+          // const offset = get_global_offset(
+          //   workspace.brick_refs[brick.id].current
+          // );
+          // offset.y += 40;
+          // return offset;
+          return { x: 0, y: 0 };
+        },
+      };
+      const input_fns = {
+        ...basic_fns,
+        offset: () => {
+          // const offset = get_global_offset(
+          //   workspace.brick_refs[brick.id].current
+          // );
+          // offset.x++;
+          // offset.y++;
+          // return offset;
+          return { x: 0, y: 0 };
+        },
+      };
+      const typeToInstance = {
+        atomic_input_string: () => (
+          <Input
+            value={data.ui.value.toString()}
+            {...input_fns}
+            editing={
+              false
+              // workspace.mask_data.visibility &&
+              // workspace.mask_data.brick_id === brick.id
+            }
           />
-        </div>
-      ),
-      atomic_param: () => (
-        <div key={id} className={styles.atomicParam}>
-          {data.ui.value}
-        </div>
-      ),
-    };
-    return typeToInstance[data.type]();
+        ),
+        atomic_input_number: () => typeToInstance.atomic_input_string(),
+        atomic_dropdown: () => (
+          <Select
+            value={data.ui.value}
+            options={atomic_dropdown_menu[data.ui.dropdown]}
+            {...select_fns}
+          />
+        ),
+        atomic_boolean: () => typeToInstance.atomic_dropdown(),
+        atomic_button: () => (
+          <div key={id} className={styles.atomicButtonWrap}>
+            <div
+              className={data.ui.className}
+              onClick={(e) => {
+                e.stopPropagation();
+                // atomic_button_fns[brick.ui.value](
+                //   workspace.brick_id_to_data,
+                //   brick,
+                //   () =>
+                //     workspace.update(() => workspace.root_bricks_on_change())
+                // );
+              }}
+            />
+          </div>
+        ),
+        atomic_param: () => (
+          <div key={id} className={styles.atomicParam}>
+            {data.ui.value}
+          </div>
+        ),
+      };
+      atomic_el = typeToInstance[data.type]();
+    }
   }
 
   const events = {
@@ -179,7 +181,7 @@ const BrickComponent = ({ data }: Props) => {
     onContextMenu: fn_on_context_menu,
   };
 
-  const inputs_el = data.inputs.length ? (
+  const inputs_el = data.inputs && data.inputs.length ? (
     <div
       {...events}
       className={`${styles.inputs} ${data.ui.show_hat ? styles.hat : ""}`}
@@ -209,7 +211,7 @@ const BrickComponent = ({ data }: Props) => {
       }}
       className={`${styles.wrap} ${
         data.output
-          ? `${styles.output} ${styles[BrickOutput[data.output]]}`
+          ? `${styles.output} ${styles[`output_${BrickOutput[data.output]}`]}`
           : ""
       } ${data.ui.is_removing ? styles.removing : ""} ${
         self_is_container ? styles.container : ""
@@ -220,6 +222,7 @@ const BrickComponent = ({ data }: Props) => {
       {inputs_el}
       {parts_el}
       {next_el}
+      {atomic_el}
     </div>
   );
 };

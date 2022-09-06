@@ -36,7 +36,7 @@ module.exports = (env) => ({
             query: {
               modules: true,
               namedExport: true,
-              localIdentName: "[name]_[local]_[hash:base64:5]",
+              localIdentName: "[local]",
             },
           },
           { loader: "less-loader" },

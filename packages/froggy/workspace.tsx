@@ -3,6 +3,9 @@ import { DragEvent, MouseEvent, TouchEvent } from 'react';
 
 import styles from './styles/index.less';
 
+import { useAppSelector, useAppDispatch } from './app/hooks';
+import { reset, selectAll, setActiveToolbox } from "./brick/brickSlice";
+
 import { Provider } from 'react-redux';
 import { store } from './app/store';
 import BrickComponent from './brick';
@@ -35,8 +38,8 @@ type Props = {
     categories: {[name: string]: Brick[]},
     activeCategory: string,
   },
-  atomic_button_fns: {[name: string]: Function},
-  atomic_dropdown_menu: {[id: string]: {[name: string]: any}},
+  atomic_button_fns?: {[name: string]: Function},
+  atomic_dropdown_menu?: {[id: string]: {[name: string]: any}},
   workspace_on_change?: Function,
 };
 
@@ -47,18 +50,25 @@ type Props = {
 //   };
 // }
 
-const Workspace = ({
-  id,
-  root_bricks,
-  toolbox,
-  atomic_button_fns,
-  atomic_dropdown_menu,
-  workspace_on_change,
-}: Props) => {
+const Workspace = (props: Props) => {
   let active_brick_needs_removing = false;
   const froggy_ref = React.createRef<HTMLDivElement>();
   const toolbox_ref = React.createRef<HTMLDivElement>();
   const toolbox_bricks_ref = React.createRef<HTMLDivElement>();
+
+  const {
+    bricks,
+    toolbox,
+  } = useAppSelector(selectAll);
+
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    dispatch(reset({
+      bricks: props.root_bricks,
+      atomic_dropdown_menu: props.atomic_dropdown_menu,
+      toolbox: props.toolbox,
+    }));
+  }, [props]);
 
   const mask_data = {
     brick_id: undefined,
@@ -89,7 +99,7 @@ const Workspace = ({
   function update_toolbox_procedure() {
     const procedures = {};
     const procedures_with_output = {};
-    root_bricks
+    bricks
       .filter((i) => is_procedure_def(i))
       .forEach((i) => {
         const procedure_name = i.inputs[1].inputs[0].ui.value;
@@ -163,7 +173,7 @@ const Workspace = ({
       });
       if (procedures_with_output[i]) {
         const id_with_output = `procedure_with_output∫${i}`;
-        this.toolbox.categories.procedure.push({
+        toolbox.categories.procedure.push({
           id: id_with_output,
           type: "procedure_with_output",
           output: BrickOutput.any,
@@ -259,17 +269,6 @@ const Workspace = ({
     */
   }
 
-  const remove_root_brick = (brick) => {
-    let root_index = 0;
-    while (
-      root_index < root_bricks.length &&
-      root_bricks[root_index] !== brick
-    ) {
-      ++root_index;
-    }
-    root_bricks.splice(root_index, 1);
-  };
-
   const detach_brick = (
     id,
     tail_id = undefined,
@@ -313,6 +312,72 @@ const Workspace = ({
     initial_blocks_offset: { x: 0, y: 0 },
   });
 
+  return (
+    <div className={styles.froggyWrap} ref={workspace_ref}>
+      <div
+        ref={froggy_ref}
+        className={styles.froggy}
+        style={{
+          left: `${blocks_offset.x}px`,
+          top: `${blocks_offset.y}px`,
+        }}
+      >
+        <div
+          className={styles.toolbox}
+          ref={toolbox_ref}
+          onTouchStart={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onWheel={(e) => e.stopPropagation()}
+          style={{
+            left: `${-blocks_offset.x}px`,
+            top: `${-blocks_offset.y}px`,
+          }}
+        >
+          <div className={styles.categories}>
+            {Object.keys(toolbox.categories).map((i) => (
+              <div
+                key={i}
+                onClick={() => {
+                  dispatch(setActiveToolbox(i));
+                }}
+                className={`${styles.category} ${
+                  i === toolbox.activeCategory ? styles.activeCategory : ""
+                }`}
+              >
+                {i}
+              </div>
+            ))}
+          </div>
+          <div className={styles.toolboxBricks} ref={toolbox_bricks_ref}>
+            {(toolbox.categories[toolbox.activeCategory] || []).map((i) => (
+              <BrickComponent key={i.id} data={i} />
+            ))}
+          </div>
+        </div>
+        {bricks.map((i) => (
+          <BrickComponent key={get_id(i)} data={i} />
+        ))}
+      </div>
+      <div
+        className={styles.mask}
+        style={{
+          display: mask_data.visibility ? "block" : "none",
+        }}
+      >
+        {mask_data.content}
+      </div>
+    </div>
+  );
+};
+
+const WorkspaceWrap = ({
+  id,
+  root_bricks,
+  toolbox,
+  atomic_button_fns,
+  atomic_dropdown_menu,
+  workspace_on_change,
+}: Props) => {
 
   return (
     <React.StrictMode>
@@ -323,70 +388,19 @@ const Workspace = ({
             atomic_dropdown_menu,
           }}
         >
-          <div className={styles.froggyWrap} ref={workspace_ref}>
-            <div
-              ref={froggy_ref}
-              className={styles.froggy}
-              style={{
-                left: `${blocks_offset.x}px`,
-                top: `${blocks_offset.y}px`,
-              }}
-            >
-              <div
-                className={styles.toolbox}
-                ref={toolbox_ref}
-                onTouchStart={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onWheel={(e) => e.stopPropagation()}
-                style={{
-                  left: `${-blocks_offset.x}px`,
-                  top: `${-blocks_offset.y}px`,
-                }}
-              >
-                <div className={styles.categories}>
-                  {Object.keys(toolbox.categories).map((i) => (
-                    <div
-                      key={i}
-                      onClick={() => {
-                        // toolbox.activeCategory = i;
-                        // update();
-                      }}
-                      className={`${styles.category} ${
-                        i === toolbox.activeCategory
-                          ? styles.activeCategory
-                          : ""
-                      }`}
-                    >
-                      {i}
-                    </div>
-                  ))}
-                </div>
-                <div className={styles.toolboxBricks} ref={toolbox_bricks_ref}>
-                  {toolbox.categories[toolbox.activeCategory].map((i) => (
-                    <BrickComponent key={i.id} data={i} />
-                  ))}
-                </div>
-              </div>
-              {root_bricks.map((i) => (
-                <BrickComponent key={get_id(i)} data={i} />
-              ))}
-            </div>
-            <div
-              className={styles.mask}
-              style={{
-                display: mask_data.visibility ? "block" : "none",
-              }}
-            >
-              {mask_data.content}
-            </div>
-          </div>
+          <Workspace
+            workspace_on_change={workspace_on_change}
+            id={id}
+            root_bricks={root_bricks}
+            toolbox={toolbox}
+          />
         </Context.Provider>
       </Provider>
     </React.StrictMode>
   );
 }
 
-export default Workspace;
+export default WorkspaceWrap;
 
 // block 移动/attach/detach
 // block on mouse down -> workspace listeners add mousemove, mouseup

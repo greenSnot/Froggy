@@ -1,5 +1,5 @@
 import React from 'react';
-import Workspace from '../workspace';
+import WorkspaceWrap from '../workspace';
 
 import { get_global_offset } from '../util';
 

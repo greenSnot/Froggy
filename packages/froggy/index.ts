@@ -1,5 +1,5 @@
-import Workspace from './workspace';
+import WorkspaceWrap from './workspace';
 export * from './brick';
 export * from './util';
 export * from './types';
-export { Workspace };
+export { WorkspaceWrap as Workspace };
