@@ -1,49 +1,49 @@
-import React, { useCallback, useRef } from "react";
-import { BrickDragEvent } from "./types";
+import { createListenerMiddleware } from "@reduxjs/toolkit";
+import React, { useCallback, useEffect, useRef } from "react";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { DragData } from "../types";
+import { get_global_offset } from "../util";
+import { detach, insert } from "./brickSlice";
 
-export function useDragEvents(workspace_ref: React.RefObject<HTMLDivElement>) {
-  const brick_is_dragging_ref = useRef(false);
+export function useBrickEvents(workspace_ref: React.RefObject<HTMLDivElement>) {
+  const is_dragging_ref = useRef(false);
   const active_brick_id_ref = useRef('');
 
   const brick_drag_start_data_ref = useRef<
-    BrickDragEvent & {
-      local_offset?: {
-        x: number;
-        y: number;
-      };
-    }
+    DragData
   >();
 
-  const brick_on_drag_start = useCallback((e: BrickDragEvent) => {
-    active_brick_id_ref.current = e.id;
-    brick_drag_start_data_ref.current = e;
-    let id = e.id;
-    /*
-    if (brick_id_to_data[e.id].is_static) {
-      id = get_ancestor(brick_id_to_data, brick_id_to_data[e.id]).id;
-      active_brick_id = id;
-      brick_drag_start_data.id = id;
-    }
-    brick_drag_start_data.local_offset = get_global_offset(
-      brick_refs[id].current,
-      froggy_ref.current
-    );
-    const data = brick_id_to_data[id];
-    if (data.ui.is_toolbox_brick) {
-      if (data.root) {
-        brick_drag_start_data.id = data.root;
-        brick_drag_start_data.local_offset = get_global_offset(
-          brick_refs[data.root].current,
-          froggy_ref.current
-        );
+  const dispatch = useAppDispatch();
+  // const blocks_offset = useAppSelector(selectBrick());
+
+  const brick_on_drag_move = useCallback(async (e) => {
+    console.log('drag move')
+    const x1 = e.touches ? e.touches[0].pageX : e.pageX;
+    const y1 = e.touches ? e.touches[0].pageY : e.pageY;
+    const x2 = brick_drag_start_data_ref.current.mouse_global_x;
+    const y2 = brick_drag_start_data_ref.current.mouse_global_y;
+    const brick = brick_drag_start_data_ref.current.brick;
+    if (!is_dragging_ref.current) {
+      if (!brick.ui.is_toolbox_brick) {
+        dispatch(insert({ path: [], source: brick }));
+      } else if (
+        !brick.is_root &&
+        (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) >= 20 * 20
+      ) {
+        console.log("detach");
+        // const test = await dispatch(detach({ path: brick.path! }));
       }
-      brick_drag_start_data.local_offset.x -=
-        toolbox_bricks_ref.current.scrollLeft;
-      brick_drag_start_data.local_offset.y -=
-        toolbox_bricks_ref.current.scrollTop;
     }
-    */
-  }, []);
+    // TODO
+  }, [dispatch]);
+
+  const brick_on_drag_start = useCallback((data: DragData) => {
+    console.log('drag start')
+    brick_drag_start_data_ref.current = data;
+    workspace_ref.current.addEventListener('mousemove', brick_on_drag_move);
+    workspace_ref.current.addEventListener('mouseup', brick_on_drag_end);
+  }, [workspace_ref]);
+
   const brick_on_click = useCallback((e) => {
     active_brick_id_ref.current = undefined;
   }, []);
@@ -252,6 +252,9 @@ export function useDragEvents(workspace_ref: React.RefObject<HTMLDivElement>) {
     */
   };
   const brick_on_drag_end = useCallback((e) => {
+    console.log('drag end');
+    workspace_ref.current.removeEventListener('mousemove', brick_on_drag_move);
+    workspace_ref.current.removeEventListener('mouseup', brick_on_drag_end);
     /*
     if (active_brick_needs_removing) {
       remove_root_brick(brick_id_to_data[active_brick_id]);
@@ -271,12 +274,10 @@ export function useDragEvents(workspace_ref: React.RefObject<HTMLDivElement>) {
     clear_inserting_candidates();
     update(() => root_bricks_on_change());
     */
-  }, []);
-}
+  }, [workspace_ref]);
 
-export function useContextMenu() {
-  /*
-  const brick_on_context_menu = (e: BrickDragEvent) => {
+  const brick_on_context_menu = useCallback((e: DragData) => {
+    /*
     const id = active_brick_id;
     mask_data = {
       visibility: true,
@@ -307,8 +308,11 @@ export function useContextMenu() {
         />
       ),
     };
-  };
     */
+  }, []);
 
-
+  return {
+    brick_on_drag_start,
+    brick_on_context_menu,
+  }
 }

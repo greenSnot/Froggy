@@ -2,75 +2,67 @@ import React, { ReactElement, useCallback, useContext, useRef } from "react";
 import ContextMenu from "../dummy/context_menu";
 import Input from "../dummy/input";
 import Select from "../dummy/select";
-import { DragEvent, MouseEvent, TouchEvent } from "react";
+import { MouseEvent, TouchEvent } from "react";
 import {
   Brick,
   BrickOutput,
   BrickId,
-  BrickDragEvent,
+  DragData,
   AtomicBrickEnum,
 } from "../types";
 import styles from "../styles/brick.less";
-import { get_id, is_container } from "../util";
+import { get_ancestor, get_id, is_container } from "../util";
 import { Context } from "../context";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
 
 type Props = {
   data: Brick;
+  interactable_parent?: Brick;
 };
 
-const BrickComponent = ({ data }: Props) => {
+const BrickComponent = ({ data, interactable_parent }: Props) => {
   const { path } = data;
   const id = get_id(data);
   const self_is_container = is_container(data);
 
-  const on_drag_start: (e: BrickDragEvent) => void = () => {};
-  const on_context_menu: (e: BrickDragEvent) => void = () => {};
-  const { atomic_dropdown_menu, atomic_button_fns } = useContext(Context);
+  const {
+    atomic_dropdown_menu,
+    atomic_button_fns,
+    brick_on_drag_start,
+    brick_on_context_menu,
+  } = useContext(Context);
 
-  const on_touch_start = useCallback(
-    (e: TouchEvent<HTMLDivElement>) => {
-      if (self_is_container) {
-        return;
-      }
-      e.stopPropagation();
-      on_drag_start({
-        id: id,
-        mouse_global_x: e.touches[0].pageX,
-        mouse_global_y: e.touches[0].pageY,
-      });
-    },
-    [on_drag_start, id, self_is_container]
-  );
-
+  const dispatch = useAppDispatch();
+  const interactable_brick = data.ui.is_toolbox_brick
+    ? data.is_root
+      ? data
+      : interactable_parent
+    : data.is_static
+    ? interactable_parent
+    : data;
   const on_mouse_down = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
-      if (self_is_container) {
-        return;
-      }
       e.stopPropagation();
-      on_drag_start({
-        id: id,
+      brick_on_drag_start({
+        brick: interactable_brick,
         mouse_global_x: e.pageX,
         mouse_global_y: e.pageY,
       });
     },
-    [on_drag_start, id, self_is_container]
+    [interactable_brick, brick_on_drag_start]
   );
 
   const fn_on_context_menu = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
-      if (self_is_container) {
-        return;
-      }
       e.preventDefault();
       e.stopPropagation();
-      on_context_menu({
-        id: id,
+      brick_on_context_menu({
+        brick: interactable_brick,
         mouse_global_x: e.pageX,
         mouse_global_y: e.pageY,
       });
     },
-    [on_context_menu, id, self_is_container]
+    [brick_on_context_menu, interactable_brick]
   );
 
   let atomic_el = null;
@@ -176,7 +168,6 @@ const BrickComponent = ({ data }: Props) => {
   }
 
   const events = {
-    onTouchStart: on_touch_start,
     onMouseDown: on_mouse_down,
     onContextMenu: fn_on_context_menu,
   };
@@ -187,20 +178,20 @@ const BrickComponent = ({ data }: Props) => {
       className={`${styles.inputs} ${data.ui.show_hat ? styles.hat : ""}`}
     >
       {data.inputs.map((i) => (
-        <BrickComponent key={get_id(i)} data={i} />
+        <BrickComponent key={get_id(i)} data={i} interactable_parent={interactable_brick} />
       ))}
     </div>
   ) : null;
   const parts_el = data.parts && data.parts.length ? (
     <div className={styles.parts}>
       {data.parts.map((i) => (
-        <BrickComponent data={i} key={get_id(i)} />
+        <BrickComponent data={i} key={get_id(i)} interactable_parent={interactable_brick} />
       ))}
     </div>
   ) : null;
   const next_el = data.next ? (
     <div className={styles.next}>
-      <BrickComponent data={data.next} key={get_id(data.next)} />
+      <BrickComponent data={data.next} key={get_id(data.next)} interactable_parent={interactable_brick} />
     </div>
   ) : null;
   return (

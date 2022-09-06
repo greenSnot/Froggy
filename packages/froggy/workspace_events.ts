@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useAppDispatch, useAppSelector } from './app/hooks';
+import { changeBlocksOffsetBy, selectBlocksOffset, setBlocksOffset } from './brick/brickSlice';
 import { Offset } from "./types";
 import { get_global_offset } from './util';
 
-export function useWorkspaceEvents({
-    initial_blocks_offset
-}:{
-    initial_blocks_offset: Offset,
-}) {
+export function useWorkspaceEvents() {
   const workspace_ref = useRef<HTMLDivElement>();
 
   const workspace_drag_start_data_ref = useRef<{
@@ -14,40 +12,49 @@ export function useWorkspaceEvents({
     workspace_global_y: number;
     mouse_global_x: number;
     mouse_global_y: number;
+    blocks_offset_x: number;
+    blocks_offset_y: number;
   }>({
     workspace_global_x: 0,
     workspace_global_y: 0,
     mouse_global_x: 0,
     mouse_global_y: 0,
+    blocks_offset_x: 0,
+    blocks_offset_y: 0,
   });
 
-  const [blocks_offset, set_blocks_offset] = useState<Offset>(initial_blocks_offset);
+  const dispatch = useAppDispatch();
+  const blocks_offset = useAppSelector(selectBlocksOffset);
   const workspace_on_drag = useCallback((e) => {
     const workspace_data = workspace_drag_start_data_ref.current;
     const new_offset: Offset = {
       x: Math.round(
-        workspace_data.workspace_global_x +
+        workspace_data.blocks_offset_x +
+          workspace_data.workspace_global_x +
           e.pageX -
           workspace_data.mouse_global_x
       ),
       y: Math.round(
-        workspace_data.workspace_global_y +
+        workspace_data.blocks_offset_y +
+          workspace_data.workspace_global_y +
           e.pageY -
           workspace_data.mouse_global_y
       ),
     };
-    set_blocks_offset(new_offset);
-  }, []);
+    dispatch(setBlocksOffset(new_offset));
+  }, [dispatch]);
 
   const workspace_on_mouse_down = useCallback((e) => {
     const global_offset = get_global_offset(workspace_ref.current);
+    workspace_drag_start_data_ref.current.blocks_offset_x = blocks_offset.x;
+    workspace_drag_start_data_ref.current.blocks_offset_y = blocks_offset.y;
     workspace_drag_start_data_ref.current.mouse_global_x = e.pageX;
     workspace_drag_start_data_ref.current.mouse_global_y = e.pageY;
     workspace_drag_start_data_ref.current.workspace_global_x = global_offset.x;
     workspace_drag_start_data_ref.current.workspace_global_y = global_offset.y;
     workspace_ref.current.addEventListener('mousemove', workspace_on_drag);
     workspace_ref.current.addEventListener('mouseup', workspace_on_drag_end);
-  }, []);
+  }, [blocks_offset]);
 
   const workspace_on_drag_end = useCallback((e) => {
     workspace_ref.current.removeEventListener('mousemove', workspace_on_drag);
@@ -56,16 +63,26 @@ export function useWorkspaceEvents({
 
   const workspace_on_wheel = useCallback((e) => {
     e.preventDefault();
-    set_blocks_offset({
-        x: blocks_offset.x - e.deltaX,
-        y: blocks_offset.y - e.deltaY,
-    })
-  }, []);
+    dispatch(changeBlocksOffsetBy({
+      x: - e.deltaX,
+      y: - e.deltaY,
+    }));
+  }, [dispatch]);
 
   useEffect(() => {
-    workspace_ref.current.addEventListener('mousedown', workspace_on_drag);
-    workspace_ref.current.addEventListener('wheel', workspace_on_wheel);
-  }, []);
+    workspace_ref.current.addEventListener(
+      "mousedown",
+      workspace_on_mouse_down
+    );
+    workspace_ref.current.addEventListener("wheel", workspace_on_wheel);
+    return () => {
+      workspace_ref.current.removeEventListener(
+        "mousedown",
+        workspace_on_mouse_down
+      );
+      workspace_ref.current.removeEventListener("wheel", workspace_on_wheel);
+    };
+  }, [blocks_offset]);
 
   return {
     workspace_ref,

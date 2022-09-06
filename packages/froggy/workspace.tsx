@@ -1,5 +1,4 @@
 import React, { ReactElement, ReactHTMLElement, useCallback, useEffect } from 'react';
-import { DragEvent, MouseEvent, TouchEvent } from 'react';
 
 import styles from './styles/index.less';
 
@@ -24,12 +23,13 @@ import {
 import {
   Brick,
   AtomicBrickEnum,
-  BrickDragEvent,
+  DragData,
   BrickOutput,
 } from './types';
 
 import { useWorkspaceEvents } from './workspace_events';
 import { Context } from './context';
+import { useBrickEvents } from './brick/brick_events';
 
 type Props = {
   id: string,
@@ -38,8 +38,8 @@ type Props = {
     categories: {[name: string]: Brick[]},
     activeCategory: string,
   },
-  atomic_button_fns?: {[name: string]: Function},
-  atomic_dropdown_menu?: {[id: string]: {[name: string]: any}},
+  atomic_button_fns: {[name: string]: Function},
+  atomic_dropdown_menu: {[id: string]: {[name: string]: any}},
   workspace_on_change?: Function,
 };
 
@@ -51,23 +51,24 @@ type Props = {
 // }
 
 const Workspace = (props: Props) => {
+  const { atomic_button_fns, atomic_dropdown_menu } = props;
   let active_brick_needs_removing = false;
   const froggy_ref = React.createRef<HTMLDivElement>();
   const toolbox_ref = React.createRef<HTMLDivElement>();
   const toolbox_bricks_ref = React.createRef<HTMLDivElement>();
 
-  const {
-    bricks,
-    toolbox,
-  } = useAppSelector(selectAll);
+  const { bricks, toolbox } = useAppSelector(selectAll);
 
   const dispatch = useAppDispatch();
   useEffect(() => {
-    dispatch(reset({
-      bricks: props.root_bricks,
-      atomic_dropdown_menu: props.atomic_dropdown_menu,
-      toolbox: props.toolbox,
-    }));
+    dispatch(
+      reset({
+        bricks: props.root_bricks,
+        atomic_dropdown_menu: props.atomic_dropdown_menu,
+        toolbox: props.toolbox,
+        blocks_offset: { x: 0, y: 0 },
+      })
+    );
   }, [props]);
 
   const mask_data = {
@@ -308,65 +309,73 @@ const Workspace = (props: Props) => {
     */
   };
 
-  const { workspace_ref, blocks_offset } = useWorkspaceEvents({
-    initial_blocks_offset: { x: 0, y: 0 },
-  });
+  const { workspace_ref, blocks_offset } = useWorkspaceEvents();
+  const { brick_on_context_menu, brick_on_drag_start } =
+    useBrickEvents(workspace_ref);
 
   return (
-    <div className={styles.froggyWrap} ref={workspace_ref}>
-      <div
-        ref={froggy_ref}
-        className={styles.froggy}
-        style={{
-          left: `${blocks_offset.x}px`,
-          top: `${blocks_offset.y}px`,
-        }}
-      >
+    <Context.Provider
+      value={{
+        atomic_button_fns,
+        atomic_dropdown_menu,
+        brick_on_drag_start,
+        brick_on_context_menu,
+      }}
+    >
+      <div className={styles.froggyWrap} ref={workspace_ref}>
         <div
-          className={styles.toolbox}
-          ref={toolbox_ref}
-          onTouchStart={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onWheel={(e) => e.stopPropagation()}
+          ref={froggy_ref}
+          className={styles.froggy}
           style={{
-            left: `${-blocks_offset.x}px`,
-            top: `${-blocks_offset.y}px`,
+            left: `${blocks_offset.x}px`,
+            top: `${blocks_offset.y}px`,
           }}
         >
-          <div className={styles.categories}>
-            {Object.keys(toolbox.categories).map((i) => (
-              <div
-                key={i}
-                onClick={() => {
-                  dispatch(setActiveToolbox(i));
-                }}
-                className={`${styles.category} ${
-                  i === toolbox.activeCategory ? styles.activeCategory : ""
-                }`}
-              >
-                {i}
-              </div>
-            ))}
+          <div
+            className={styles.toolbox}
+            ref={toolbox_ref}
+            onTouchStart={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              left: `${-blocks_offset.x}px`,
+              top: `${-blocks_offset.y}px`,
+            }}
+          >
+            <div className={styles.categories}>
+              {Object.keys(toolbox.categories).map((i) => (
+                <div
+                  key={i}
+                  onClick={() => {
+                    dispatch(setActiveToolbox(i));
+                  }}
+                  className={`${styles.category} ${
+                    i === toolbox.activeCategory ? styles.activeCategory : ""
+                  }`}
+                >
+                  {i}
+                </div>
+              ))}
+            </div>
+            <div className={styles.toolboxBricks} ref={toolbox_bricks_ref}>
+              {(toolbox.categories[toolbox.activeCategory] || []).map((i) => (
+                <BrickComponent key={i.id} data={i} />
+              ))}
+            </div>
           </div>
-          <div className={styles.toolboxBricks} ref={toolbox_bricks_ref}>
-            {(toolbox.categories[toolbox.activeCategory] || []).map((i) => (
-              <BrickComponent key={i.id} data={i} />
-            ))}
-          </div>
+          {bricks.map((i) => (
+            <BrickComponent key={get_id(i)} data={i} />
+          ))}
         </div>
-        {bricks.map((i) => (
-          <BrickComponent key={get_id(i)} data={i} />
-        ))}
+        <div
+          className={styles.mask}
+          style={{
+            display: mask_data.visibility ? "block" : "none",
+          }}
+        >
+          {mask_data.content}
+        </div>
       </div>
-      <div
-        className={styles.mask}
-        style={{
-          display: mask_data.visibility ? "block" : "none",
-        }}
-      >
-        {mask_data.content}
-      </div>
-    </div>
+    </Context.Provider>
   );
 };
 
@@ -378,23 +387,17 @@ const WorkspaceWrap = ({
   atomic_dropdown_menu,
   workspace_on_change,
 }: Props) => {
-
   return (
     <React.StrictMode>
       <Provider store={store}>
-        <Context.Provider
-          value={{
-            atomic_button_fns,
-            atomic_dropdown_menu,
-          }}
-        >
-          <Workspace
-            workspace_on_change={workspace_on_change}
-            id={id}
-            root_bricks={root_bricks}
-            toolbox={toolbox}
-          />
-        </Context.Provider>
+        <Workspace
+          workspace_on_change={workspace_on_change}
+          id={id}
+          root_bricks={root_bricks}
+          toolbox={toolbox}
+          atomic_button_fns={atomic_button_fns}
+          atomic_dropdown_menu={atomic_dropdown_menu}
+        />
       </Provider>
     </React.StrictMode>
   );

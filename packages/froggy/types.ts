@@ -1,6 +1,6 @@
 export type BrickId = string;
-export type BrickDragEvent = {
-  id: BrickId,
+export type DragData = {
+  brick: Brick;
   mouse_global_x: number,
   mouse_global_y: number,
 };
