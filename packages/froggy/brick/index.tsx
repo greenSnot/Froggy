@@ -11,7 +11,7 @@ import {
   AtomicBrickEnum,
 } from "../types";
 import styles from "../styles/brick.less";
-import { get_ancestor, get_id, is_container } from "../util";
+import { get_id, is_container } from "../util";
 import { Context } from "../context";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 
@@ -210,7 +210,7 @@ const BrickComponent = ({ data, interactable_parent }: Props) => {
       } ${data.ui.is_removing ? styles.removing : ""} ${
         self_is_container ? styles.container : ""
       }  ${data.ui.is_ghost ? styles.ghost : ""}`}
-      data-id={id}
+      id={id}
       {...events}
     >
       {inputs_el}

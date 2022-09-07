@@ -33,15 +33,7 @@ export const flatten = (i) => {
   return res;
 };
 
-export const get_ancestor = (bricks, brick: Brick) => {
-  let ancestor = brick;
-  while (ancestor.ui.parent) {
-    ancestor = bricks[ancestor.ui.parent];
-  }
-  return ancestor;
-};
-
-export const clone = (brick: Brick, with_ui = true) => {
+export const clone = (brick: Brick, with_ui = true, remove_toolbox_flag = true) => {
   let root;
   const do_clone = (b: Brick, prev: BrickId, parent = undefined) => {
     const id = gen_id();
@@ -57,10 +49,8 @@ export const clone = (brick: Brick, with_ui = true) => {
     if (with_ui) {
       res.ui = {
         ...b.ui,
-        parent: parent,
-        delegate: b.output ? undefined : parent,
       };
-      delete res.ui.is_toolbox_brick;
+      remove_toolbox_flag && delete res.ui.is_toolbox_brick;
       delete res.ui.is_removing;
       delete res.ui.is_ghost;
     }
@@ -70,7 +60,6 @@ export const clone = (brick: Brick, with_ui = true) => {
     return res;
   };
   const root_brick = do_clone(brick, undefined);
-  root_brick.root = undefined;
   root_brick.ui.offset = {
     x: root_brick.ui.offset?.x || 0,
     y: root_brick.ui.offset?.y || 0,
@@ -118,7 +107,7 @@ export const is_procedure = (brick: Brick) => brick.type === 'procedure';
 export const is_procedure_with_output = (brick: Brick) => brick.type === 'procedure_with_output';
 export const is_procedure_return = (brick: Brick) => brick.type === 'procedure_return';
 export const get_id = (brick: Brick) => {
- return brick.id || brick.path.join('-');
+ return `${brick.ui.is_toolbox_brick ? 'toolbox' : 'workspace'}/${brick.path.join('-')}`;
 }
 
 export function update_path(brick: Brick, default_path = []) {

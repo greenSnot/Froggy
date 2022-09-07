@@ -203,47 +203,37 @@ const atomic_button_fns = {
     const grandpa = brick_id_to_data[father.ui.parent];
     const last2 = grandpa.parts[grandpa.parts.length - 2];
     if (last2.type !== 'control_if#else' || grandpa.parts.length === 2) {
-      const id = gen_id();
       grandpa.parts.splice(grandpa.parts.length - 1, 0, {
-        id,
         type: 'control_if#else',
         root: cfg.root,
         next: null,
         is_static: true,
         inputs: [{
-          id: gen_id(),
           type: 'atomic_text',
           root: cfg.root,
           ui: {
-            delegate: id,
             is_toolbox_brick: grandpa.ui.is_toolbox_brick,
             offset: { x: 0, y: 0 },
             value: 'else',
-            parent: id,
           },
         }],
         ui: {
-          delegate: grandpa.id,
           offset: { x: 0, y: 0 },
           is_toolbox_brick: grandpa.ui.is_toolbox_brick,
-          parent: grandpa.id,
         },
       });
     } else {
       last2.type = 'control_if#else_if';
       last2.inputs[0].ui.value = 'else if';
       last2.inputs.push({
-        id: gen_id(),
         type: 'container',
         output: BrickOutput.boolean,
         inputs: [],
         root: cfg.root,
         ui: {
-          delegate: last2.id,
           is_toolbox_brick: grandpa.ui.is_toolbox_brick,
           offset: { x: 0, y: 0 },
           value: ' if',
-          parent: last2.id,
         },
       });
     }

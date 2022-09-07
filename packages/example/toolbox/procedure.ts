@@ -1,4 +1,4 @@
-import { gen_id, Brick, BrickOutput } from 'froggy';
+import { Brick, BrickOutput } from 'froggy';
 import { atomicButtonAdd, atomicButtonRemove } from './styles/button.less';
 
 const bricks: Brick[] = [
@@ -78,7 +78,6 @@ const atomic_button_fns = {
     const parent = brick_data[brick.ui.parent];
     if (parent.inputs.length === 4) {
       parent.inputs.splice(parent.inputs.length - 2, 0, {
-        id: gen_id(),
         type: 'atomic_text',
         ui: {
           value: 'params:',
@@ -87,19 +86,15 @@ const atomic_button_fns = {
       });
     }
     const param_name = prompt(`param's name`);
-    const id = gen_id();
     parent.inputs.splice(parent.inputs.length - 2, 0, {
-      id,
       type: 'container',
       output: BrickOutput.any,
       root: parent.root,
       is_static: true,
       inputs: [{
-        id: gen_id(),
         type: 'atomic_param',
         output: BrickOutput.any,
         ui: {
-          parent: id,
           is_toolbox_brick: parent.ui.is_toolbox_brick,
           value: param_name,
         },
@@ -108,7 +103,6 @@ const atomic_button_fns = {
       ui: {
         copier: true,
         is_toolbox_brick: parent.ui.is_toolbox_brick,
-        parent: parent.id,
       },
     } as Brick);
     update();

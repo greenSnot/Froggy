@@ -1,8 +1,8 @@
 import { createListenerMiddleware } from "@reduxjs/toolkit";
 import React, { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
-import { DragData } from "../types";
-import { clone, get_global_offset } from "../util";
+import { DragData, Offset } from "../types";
+import { clone, get_global_offset, get_id } from "../util";
 import { detach, insert, selectBlocksOffset, setBlocksOffset, setBrickOffset } from "./brickSlice";
 
 export function useBrickEvents(
@@ -49,9 +49,18 @@ export function useBrickEvents(
           is_dragging_ref.current = true;
         } else if ((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) >= 10 * 10) {
           is_dragging_ref.current = true;
+          const global_offset = get_global_offset(
+            document.getElementById(get_id(brick))
+          );
+          const offset: Offset = {
+            x: global_offset.x + x1 - x2 - data.bricks_offset_x,
+            y: global_offset.y + y1 - y2 - data.bricks_offset_y,
+          };
+          data.brick_offset_x = offset.x;
+          data.brick_offset_y = offset.y;
           data.brick_path = [data.n_root_bricks.toString()];
           data.n_root_bricks++;
-          dispatch(detach({ path: brick.path! }));
+          dispatch(detach({ path: brick.path!, offset }));
         }
       } else {
         dispatch(

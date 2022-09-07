@@ -24,14 +24,11 @@ export enum AtomicBrickEnum {
 }
 
 export type RuntimeBrick = {
-  id?: string,
   path?: string[],
   type: string,
-  root?: BrickId,
   is_root?: boolean,
 
   parts?: Brick[],
-  prev?: BrickId,
   next?: Brick,
   output?: BrickOutput,
   inputs?: Brick[],
@@ -43,7 +40,6 @@ export type Brick = RuntimeBrick & {
   ui?: {
     className?: string,
     copier?: boolean, // for output container
-    parent?: BrickId, // part's parent or input's parent
     show_hat?: boolean,
     is_removing?: boolean,
     is_ghost?: boolean,
@@ -51,7 +47,6 @@ export type Brick = RuntimeBrick & {
       x: number,
       y: number,
     },
-    delegate?: Brick,
     is_toolbox_brick?: boolean,
     value?: any, // output value
     dropdown?: string, // dropdown

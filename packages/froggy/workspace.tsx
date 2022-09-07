@@ -15,7 +15,6 @@ import {
   flatten,
   get_global_offset,
   clone,
-  get_ancestor,
   for_each_brick,
   get_tail,
 } from './util';
@@ -78,6 +77,7 @@ const Workspace = (props: Props) => {
   let inserting_candidates_local_offset = {};
 
   function update_toolbox_procedure() {
+    /*
     const procedures = {};
     const procedures_with_output = {};
     bricks
@@ -153,9 +153,7 @@ const Workspace = (props: Props) => {
         },
       });
       if (procedures_with_output[i]) {
-        const id_with_output = `procedure_with_output∫${i}`;
         toolbox.categories.procedure.push({
-          id: id_with_output,
           type: "procedure_with_output",
           output: BrickOutput.any,
           is_root: true,
@@ -163,9 +161,7 @@ const Workspace = (props: Props) => {
             {
               id: `procedure_with_output_text∫${i}`,
               type: "atomic_text",
-              root: id_with_output,
               ui: {
-                parent: id_with_output,
                 value: i,
                 is_toolbox_brick: true,
               },
@@ -206,6 +202,7 @@ const Workspace = (props: Props) => {
         });
       }
     });
+    */
   }
 
   function update_inserting_candidates(current: Brick) {
@@ -309,12 +306,12 @@ const Workspace = (props: Props) => {
               ))}
             </div>
             <div className={styles.toolboxBricks} ref={toolbox_bricks_ref}>
-              {(toolbox.categories[toolbox.activeCategory] || []).map((i) => (
-                <BrickComponent key={i.id} data={i} />
+              {(toolbox.categories[toolbox.activeCategory] || []).map((i, idx) => (
+                <BrickComponent key={get_id(i)} data={i} />
               ))}
             </div>
           </div>
-          {bricks.map((i) => (
+          {bricks.map((i, idx) => (
             <BrickComponent key={get_id(i)} data={i} />
           ))}
         </div>

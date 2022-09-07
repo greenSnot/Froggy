@@ -31,16 +31,26 @@ export const brickSlice = createSlice({
     setActiveToolbox: (state, action: PayloadAction<string>) => {
       state.toolbox.activeCategory = action.payload;
     },
-    setBrickOffset: (state, action: PayloadAction<{path: string[], offset: Offset}>) => {
-      const brick: Brick = action.payload.path.reduce((m, i) => m[i], state.bricks);
+    setBrickOffset: (
+      state,
+      action: PayloadAction<{ path: string[]; offset: Offset }>
+    ) => {
+      const brick: Brick = action.payload.path.reduce(
+        (m, i) => m[i],
+        state.bricks
+      );
       brick.ui.offset = action.payload.offset;
     },
-    reset: (
-      state,
-      action: PayloadAction<BrickState>
-    ) => {
+    reset: (state, action: PayloadAction<BrickState>) => {
       return {
         ...action.payload,
+        toolbox: {
+          categories: Object.keys(action.payload.toolbox.categories).reduce((m, i) => {
+            m[i] = action.payload.toolbox.categories[i].map((j, idx) => update_path(clone(j, true, false), [idx]));
+            return m;
+          }, {}),
+          activeCategory: action.payload.toolbox.activeCategory,
+        },
         bricks: action.payload.bricks
           .map((i) => clone(i))
           .map((i, idx) => update_path(i, [idx])),
@@ -51,7 +61,9 @@ export const brickSlice = createSlice({
       action: PayloadAction<{ path: string[]; source: Brick }>
     ) => {
       const brick = action.payload.source;
-      const parent: Brick = action.payload.path.slice(0, -1).reduce((m, i) => m[i], state.bricks);
+      const parent: Brick = action.payload.path
+        .slice(0, -1)
+        .reduce((m, i) => m[i], state.bricks);
       if (!action.payload.path.length) {
         state.bricks.push(brick);
       } else {
@@ -60,13 +72,22 @@ export const brickSlice = createSlice({
         brick.next = t;
       }
     },
-    detach: (state, action: PayloadAction<{ path: string[] }>) => {
-      const parent: Brick = action.payload.path.slice(0, -1).reduce((m, i) => m[i], state.bricks);
-      const brick: Brick = action.payload.path.reduce((m, i) => m[i], state.bricks);
+    detach: (
+      state,
+      action: PayloadAction<{ path: string[]; offset: Offset }>
+    ) => {
+      const parent: Brick = action.payload.path
+        .slice(0, -1)
+        .reduce((m, i) => m[i], state.bricks);
+      const brick: Brick = action.payload.path.reduce(
+        (m, i) => m[i],
+        state.bricks
+      );
       const type = action.payload.path[action.payload.path.length - 1];
       if (type === "next") {
         parent.next = null;
         const new_brick = update_path(clone(brick), [state.bricks.length]);
+        new_brick.ui.offset = action.payload.offset;
         state.bricks.push(new_brick);
       } else {
         // TODO
