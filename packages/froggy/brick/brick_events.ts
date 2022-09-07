@@ -2,47 +2,93 @@ import { createListenerMiddleware } from "@reduxjs/toolkit";
 import React, { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { DragData } from "../types";
-import { get_global_offset } from "../util";
-import { detach, insert } from "./brickSlice";
+import { clone, get_global_offset } from "../util";
+import { detach, insert, selectBlocksOffset, setBlocksOffset, setBrickOffset } from "./brickSlice";
 
-export function useBrickEvents(workspace_ref: React.RefObject<HTMLDivElement>) {
+export function useBrickEvents(workspace_ref: React.RefObject<HTMLDivElement>, froggy_ref: React.RefObject<HTMLDivElement>) {
   const is_dragging_ref = useRef(false);
   const active_brick_id_ref = useRef('');
 
   const brick_drag_start_data_ref = useRef<
-    DragData
+    DragData & {
+      bricks_offset_x: number;
+      bricks_offset_y: number;
+      brick_offset_x: number;
+      brick_offset_y: number;
+      n_root_bricks: number;
+      brick_path: string[];
+      workspace_global_x: number;
+      workspace_global_y: number;
+    }
   >();
 
   const dispatch = useAppDispatch();
-  // const blocks_offset = useAppSelector(selectBrick());
 
   const brick_on_drag_move = useCallback(async (e) => {
-    console.log('drag move')
+    const data=brick_drag_start_data_ref.current;
     const x1 = e.touches ? e.touches[0].pageX : e.pageX;
     const y1 = e.touches ? e.touches[0].pageY : e.pageY;
-    const x2 = brick_drag_start_data_ref.current.mouse_global_x;
-    const y2 = brick_drag_start_data_ref.current.mouse_global_y;
-    const brick = brick_drag_start_data_ref.current.brick;
+    const x2 = data.mouse_global_x;
+    const y2 = data.mouse_global_y;
+    const brick = data.brick;
     if (!is_dragging_ref.current) {
-      if (!brick.ui.is_toolbox_brick) {
-        dispatch(insert({ path: [], source: brick }));
-      } else if (
-        !brick.is_root &&
-        (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) >= 20 * 20
-      ) {
+      if (brick.ui.is_toolbox_brick) {
+        is_dragging_ref.current = true;
+        data.brick_offset_x = data.bricks_offset_x + x1;
+        data.brick_offset_y = data.bricks_offset_y + y1;
+        data.brick_path = [data.n_root_bricks.toString()];
+        data.n_root_bricks++;
+        const new_brick = clone(brick);
+        dispatch(insert({ path: [], source: new_brick }));
+      } else if (brick.is_root) {
+        is_dragging_ref.current = true;
+      } else if ((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) >= 10 * 10) {
+        is_dragging_ref.current = true;
         console.log("detach");
-        // const test = await dispatch(detach({ path: brick.path! }));
+        data.brick_path = [data.n_root_bricks.toString()];
+        data.n_root_bricks++;
+        const test = await dispatch(detach({ path: brick.path! }));
       }
+    } else {
+      dispatch(
+        setBrickOffset({
+          path: data.brick_path,
+          offset: {
+            x: data.brick_offset_x + x1 - x2,
+            y: data.brick_offset_y + y1 - y2,
+          },
+        })
+      );
     }
-    // TODO
   }, [dispatch]);
 
-  const brick_on_drag_start = useCallback((data: DragData) => {
-    console.log('drag start')
-    brick_drag_start_data_ref.current = data;
-    workspace_ref.current.addEventListener('mousemove', brick_on_drag_move);
-    workspace_ref.current.addEventListener('mouseup', brick_on_drag_end);
-  }, [workspace_ref]);
+  const brick_on_drag_start = useCallback(
+    (data: DragData) => {
+      is_dragging_ref.current = false;
+      const global_offset = get_global_offset(workspace_ref.current);
+      brick_drag_start_data_ref.current = {
+        ...data,
+        bricks_offset_x: parseFloat(froggy_ref.current.style.left),
+        bricks_offset_y: parseFloat(froggy_ref.current.style.top),
+        n_root_bricks: froggy_ref.current.querySelectorAll('.froggy > .wrap').length,
+        brick_offset_x: data.brick.ui.offset?.x,
+        brick_path: [...data.brick.path || []],
+        brick_offset_y: data.brick.ui.offset?.y,
+        workspace_global_x: global_offset.x,
+        workspace_global_y: global_offset.y,
+      };
+      workspace_ref.current.addEventListener("mousemove", brick_on_drag_move);
+      workspace_ref.current.addEventListener("mouseup", brick_on_drag_end);
+      return () => {
+        workspace_ref.current.removeEventListener(
+          "mousemove",
+          brick_on_drag_move
+        );
+        workspace_ref.current.removeEventListener("mouseup", brick_on_drag_end);
+      };
+    },
+    []
+  );
 
   const brick_on_click = useCallback((e) => {
     active_brick_id_ref.current = undefined;

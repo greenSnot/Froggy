@@ -53,7 +53,6 @@ type Props = {
 const Workspace = (props: Props) => {
   const { atomic_button_fns, atomic_dropdown_menu } = props;
   let active_brick_needs_removing = false;
-  const froggy_ref = React.createRef<HTMLDivElement>();
   const toolbox_ref = React.createRef<HTMLDivElement>();
   const toolbox_bricks_ref = React.createRef<HTMLDivElement>();
 
@@ -309,9 +308,15 @@ const Workspace = (props: Props) => {
     */
   };
 
-  const { workspace_ref, blocks_offset } = useWorkspaceEvents();
+  const {
+    workspace_ref,
+    blocks_offset,
+    froggy_ref,
+    workspace_on_mouse_down,
+    workspace_on_wheel,
+  } = useWorkspaceEvents();
   const { brick_on_context_menu, brick_on_drag_start } =
-    useBrickEvents(workspace_ref);
+    useBrickEvents(workspace_ref, froggy_ref);
 
   return (
     <Context.Provider
@@ -322,7 +327,12 @@ const Workspace = (props: Props) => {
         brick_on_context_menu,
       }}
     >
-      <div className={styles.froggyWrap} ref={workspace_ref}>
+      <div
+        className={styles.froggyWrap}
+        ref={workspace_ref}
+        onWheel={workspace_on_wheel}
+        onMouseDown={workspace_on_mouse_down}
+      >
         <div
           ref={froggy_ref}
           className={styles.froggy}

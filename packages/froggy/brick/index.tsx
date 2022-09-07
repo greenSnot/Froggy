@@ -39,10 +39,13 @@ const BrickComponent = ({ data, interactable_parent }: Props) => {
       : interactable_parent
     : data.is_static
     ? interactable_parent
+    : AtomicBrickEnum[data.type]
+    ? interactable_parent
     : data;
   const on_mouse_down = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       e.stopPropagation();
+      console.log('b d')
       brick_on_drag_start({
         brick: interactable_brick,
         mouse_global_x: e.pageX,

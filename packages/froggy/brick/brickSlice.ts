@@ -1,6 +1,7 @@
 import { createAsyncThunk, createListenerMiddleware, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState, AppThunk } from '../app/store';
 import { Brick, DragData, Offset } from '../types';
+import { clone, update_path } from '../util';
 
 export interface BrickState {
   blocks_offset: Offset,
@@ -30,23 +31,47 @@ export const brickSlice = createSlice({
     setActiveToolbox: (state, action: PayloadAction<string>) => {
       state.toolbox.activeCategory = action.payload;
     },
+    setBrickOffset: (state, action: PayloadAction<{path: string[], offset: Offset}>) => {
+      const brick: Brick = action.payload.path.reduce((m, i) => m[i], state.bricks);
+      brick.ui.offset = action.payload.offset;
+    },
     reset: (
       state,
       action: PayloadAction<BrickState>
     ) => {
-      return action.payload;
+      return {
+        ...action.payload,
+        bricks: action.payload.bricks
+          .map((i) => clone(i))
+          .map((i, idx) => update_path(i, [idx])),
+      };
     },
     insert: (
       state,
       action: PayloadAction<{ path: string[]; source: Brick }>
     ) => {
-      // Redux Toolkit allows us to write "mutating" logic in reducers. It
-      // doesn't actually mutate the state because it uses the Immer library,
-      // which detects changes to a "draft state" and produces a brand new
-      // immutable state based off those changes
-      // state.value += 1;
+      const brick = action.payload.source;
+      const parent: Brick = action.payload.path.slice(0, -1).reduce((m, i) => m[i], state.bricks);
+      if (!action.payload.path.length) {
+        state.bricks.push(brick);
+      } else {
+        const t = parent.next;
+        parent.next = brick;
+        brick.next = t;
+      }
     },
-    detach: (state, action: PayloadAction<{ path: string[] }>) => {},
+    detach: (state, action: PayloadAction<{ path: string[] }>) => {
+      const parent: Brick = action.payload.path.slice(0, -1).reduce((m, i) => m[i], state.bricks);
+      const brick: Brick = action.payload.path.reduce((m, i) => m[i], state.bricks);
+      const type = action.payload.path[action.payload.path.length - 1];
+      if (type === "next") {
+        parent.next = parent.next.next;
+        const new_brick = update_path(clone(brick), [state.bricks.length]);
+        state.bricks.push(new_brick);
+      } else {
+        // TODO
+      }
+    },
     setBlocksOffset: (state, action: PayloadAction<Offset>) => {
       state.blocks_offset = action.payload;
     },
@@ -67,6 +92,7 @@ export const {
   changeBlocksOffsetBy,
   reset,
   setActiveToolbox,
+  setBrickOffset,
 } = brickSlice.actions;
 
 // The function below is called a selector and allows us to select a value from

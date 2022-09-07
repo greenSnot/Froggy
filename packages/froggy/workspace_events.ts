@@ -6,6 +6,7 @@ import { get_global_offset } from './util';
 
 export function useWorkspaceEvents() {
   const workspace_ref = useRef<HTMLDivElement>();
+  const froggy_ref = useRef<HTMLDivElement>();
 
   const workspace_drag_start_data_ref = useRef<{
     workspace_global_x: number;
@@ -45,16 +46,19 @@ export function useWorkspaceEvents() {
   }, [dispatch]);
 
   const workspace_on_mouse_down = useCallback((e) => {
+    console.log('w d')
     const global_offset = get_global_offset(workspace_ref.current);
-    workspace_drag_start_data_ref.current.blocks_offset_x = blocks_offset.x;
-    workspace_drag_start_data_ref.current.blocks_offset_y = blocks_offset.y;
+    const x = parseFloat(froggy_ref.current.style.left) || 0;
+    const y = parseFloat(froggy_ref.current.style.top) || 0;
+    workspace_drag_start_data_ref.current.blocks_offset_x = x;
+    workspace_drag_start_data_ref.current.blocks_offset_y = y;
     workspace_drag_start_data_ref.current.mouse_global_x = e.pageX;
     workspace_drag_start_data_ref.current.mouse_global_y = e.pageY;
     workspace_drag_start_data_ref.current.workspace_global_x = global_offset.x;
     workspace_drag_start_data_ref.current.workspace_global_y = global_offset.y;
     workspace_ref.current.addEventListener('mousemove', workspace_on_drag);
     workspace_ref.current.addEventListener('mouseup', workspace_on_drag_end);
-  }, [blocks_offset]);
+  }, []);
 
   const workspace_on_drag_end = useCallback((e) => {
     workspace_ref.current.removeEventListener('mousemove', workspace_on_drag);
@@ -62,30 +66,17 @@ export function useWorkspaceEvents() {
   }, []);
 
   const workspace_on_wheel = useCallback((e) => {
-    e.preventDefault();
     dispatch(changeBlocksOffsetBy({
       x: - e.deltaX,
       y: - e.deltaY,
     }));
   }, [dispatch]);
 
-  useEffect(() => {
-    workspace_ref.current.addEventListener(
-      "mousedown",
-      workspace_on_mouse_down
-    );
-    workspace_ref.current.addEventListener("wheel", workspace_on_wheel);
-    return () => {
-      workspace_ref.current.removeEventListener(
-        "mousedown",
-        workspace_on_mouse_down
-      );
-      workspace_ref.current.removeEventListener("wheel", workspace_on_wheel);
-    };
-  }, [blocks_offset]);
-
   return {
+    workspace_on_mouse_down,
+    workspace_on_wheel,
     workspace_ref,
+    froggy_ref,
     blocks_offset,
-  }
+  };
 }

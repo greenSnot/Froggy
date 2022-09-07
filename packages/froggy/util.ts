@@ -72,8 +72,8 @@ export const clone = (brick: Brick, with_ui = true) => {
   const root_brick = do_clone(brick, undefined);
   root_brick.root = undefined;
   root_brick.ui.offset = {
-    x: 0,
-    y: 0,
+    x: root_brick.ui.offset?.x || 0,
+    y: root_brick.ui.offset?.y || 0,
   };
   root_brick.is_root = true;
   return root_brick as Brick;
@@ -119,4 +119,15 @@ export const is_procedure_with_output = (brick: Brick) => brick.type === 'proced
 export const is_procedure_return = (brick: Brick) => brick.type === 'procedure_return';
 export const get_id = (brick: Brick) => {
  return brick.id || brick.path.join('-');
+}
+
+export function update_path(brick: Brick, default_path = []) {
+  const s = (brick: Brick, path) => {
+    brick.path = path;
+    brick.inputs && brick.inputs.forEach((i, idx) => s(i, [...path, 'inputs', idx]));
+    brick.parts && brick.parts.forEach((i, idx) => s(i, [...path, 'parts', idx]));
+    brick.next && s(brick.next, [...path, 'next']);
+  };
+  s(brick, default_path);
+  return brick;
 }
