@@ -109,6 +109,9 @@ export const is_procedure_return = (brick: Brick) => brick.type === 'procedure_r
 export const get_id = (brick: Brick) => {
  return `${brick.ui.is_toolbox_brick ? 'toolbox' : 'workspace'}/${brick.path.join('-')}`;
 }
+export const to_id = (path: string[], scope: 'toolbox' | 'workspace') => {
+ return `${scope}/${path.join('-')}`;
+}
 
 export function update_path(brick: Brick, default_path = []) {
   const s = (brick: Brick, path) => {

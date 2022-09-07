@@ -59,6 +59,7 @@ const Workspace = (props: Props) => {
   useEffect(() => {
     dispatch(
       reset({
+        drag_state: {},
         atomic_dropdown_menu: props.atomic_dropdown_menu,
         blocks_offset: { x: 0, y: 0 },
         toolbox: {
@@ -209,48 +210,6 @@ const Workspace = (props: Props) => {
           },
         });
       }
-    });
-    */
-  }
-
-  function update_inserting_candidates(current: Brick) {
-    /*
-    if (current.ui.show_hat) {
-      return;
-    }
-    if (current.output) {
-      inserting_candidates = Object.keys(brick_id_to_data).filter((i) => {
-        const brick = brick_id_to_data[i];
-        return (
-          i !== current.id &&
-          !brick.ui.is_toolbox_brick &&
-          !(brick.root && brick_id_to_data[brick.root].ui.is_toolbox_brick) &&
-          brick.root !== current.id &&
-          is_container(brick) &&
-          !brick.is_static &&
-          (brick.output === current.output ||
-            brick.output === BrickOutput.any ||
-            current.output === BrickOutput.any)
-        );
-      });
-    } else {
-      inserting_candidates = Object.keys(brick_id_to_data).filter((i) => {
-        const brick = brick_id_to_data[i];
-        return (
-          i !== current.id &&
-          (brick.inputs || (brick.parts && brick.parts.length > 1)) &&
-          !brick.ui.is_toolbox_brick &&
-          !(brick.root && brick_id_to_data[brick.root].ui.is_toolbox_brick) &&
-          brick.root !== current.id &&
-          brick.next !== undefined
-        );
-      });
-    }
-    inserting_candidates.forEach((i) => {
-      inserting_candidates_local_offset[i] = get_global_offset(
-        brick_refs[i].current,
-        froggy_ref.current
-      );
     });
     */
   }
