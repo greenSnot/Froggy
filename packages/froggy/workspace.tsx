@@ -1,4 +1,4 @@
-import React, { ReactElement, ReactHTMLElement, useCallback, useEffect } from 'react';
+import React, { ReactElement, ReactHTMLElement, useCallback, useEffect, useRef } from 'react';
 
 import styles from './styles/index.less';
 
@@ -52,10 +52,8 @@ type Props = {
 
 const Workspace = (props: Props) => {
   const { atomic_button_fns, atomic_dropdown_menu } = props;
-  let active_brick_needs_removing = false;
-  const toolbox_ref = React.createRef<HTMLDivElement>();
-  const toolbox_bricks_ref = React.createRef<HTMLDivElement>();
-
+  const toolbox_ref = useRef<HTMLDivElement>();
+  const toolbox_bricks_ref = useRef<HTMLDivElement>();
   const { bricks, toolbox } = useAppSelector(selectAll);
 
   const dispatch = useAppDispatch();
@@ -76,25 +74,8 @@ const Workspace = (props: Props) => {
     content: null,
   };
 
-  const brick_refs = {};
-  const brick_inputs_refs = {};
-  const brick_parts_refs = {};
-
-  const brick_id_to_size = {};
-
   let inserting_candidates = [];
   let inserting_candidates_local_offset = {};
-  let active_brick_tail_id;
-  let active_brick_id;
-  let brick_is_inserting = false;
-  let workspace_is_mouse_down = false;
-  const brick_id_to_data: { [id: string]: Brick } = {};
-  const brick_id_to_component = {};
-  const root_brick_id_to_component = {};
-
-  function clear_inserting_candidates() {
-    inserting_candidates = [];
-  }
 
   function update_toolbox_procedure() {
     const procedures = {};
@@ -269,45 +250,6 @@ const Workspace = (props: Props) => {
     */
   }
 
-  const detach_brick = (
-    id,
-    tail_id = undefined,
-    offset = {
-      x: 0,
-      y: 0,
-    }
-  ) => {
-    /*
-    const brick = brick_id_to_data[id];
-    if (!brick.output) {
-      const prev = brick_id_to_data[brick.prev];
-      prev.next = null;
-      if (tail_id) {
-        const tail = brick_id_to_data[tail_id];
-        const tail_next = tail.next;
-        if (tail_next) {
-          tail_next.prev = prev.id;
-          prev.next = tail_next;
-        }
-        tail.next = null;
-      }
-    } else {
-      const container = brick_id_to_data[brick.ui.parent];
-      container.inputs = [];
-      brick.ui.parent = undefined;
-    }
-    brick.is_root = true;
-    brick.root = undefined;
-    for_each_brick(brick, undefined, (i) => {
-      i.root = id;
-      i.ui.is_ghost = false;
-    });
-    root_bricks.push(brick);
-    brick.ui.offset = offset;
-    return brick;
-    */
-  };
-
   const {
     workspace_ref,
     blocks_offset,
@@ -316,7 +258,7 @@ const Workspace = (props: Props) => {
     workspace_on_wheel,
   } = useWorkspaceEvents();
   const { brick_on_context_menu, brick_on_drag_start } =
-    useBrickEvents(workspace_ref, froggy_ref);
+    useBrickEvents(workspace_ref, froggy_ref, toolbox_bricks_ref);
 
   return (
     <Context.Provider

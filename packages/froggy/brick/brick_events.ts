@@ -5,9 +5,13 @@ import { DragData } from "../types";
 import { clone, get_global_offset } from "../util";
 import { detach, insert, selectBlocksOffset, setBlocksOffset, setBrickOffset } from "./brickSlice";
 
-export function useBrickEvents(workspace_ref: React.RefObject<HTMLDivElement>, froggy_ref: React.RefObject<HTMLDivElement>) {
+export function useBrickEvents(
+  workspace_ref: React.RefObject<HTMLDivElement>,
+  froggy_ref: React.RefObject<HTMLDivElement>,
+  toolbox_bricks_ref: React.RefObject<HTMLDivElement>
+) {
   const is_dragging_ref = useRef(false);
-  const active_brick_id_ref = useRef('');
+  const is_removing = useRef(false);
 
   const brick_drag_start_data_ref = useRef<
     DragData & {
@@ -24,152 +28,74 @@ export function useBrickEvents(workspace_ref: React.RefObject<HTMLDivElement>, f
 
   const dispatch = useAppDispatch();
 
-  const brick_on_drag_move = useCallback(async (e) => {
-    const data=brick_drag_start_data_ref.current;
-    const x1 = e.touches ? e.touches[0].pageX : e.pageX;
-    const y1 = e.touches ? e.touches[0].pageY : e.pageY;
-    const x2 = data.mouse_global_x;
-    const y2 = data.mouse_global_y;
-    const brick = data.brick;
-    if (!is_dragging_ref.current) {
-      if (brick.ui.is_toolbox_brick) {
-        is_dragging_ref.current = true;
-        data.brick_offset_x = data.bricks_offset_x + x1;
-        data.brick_offset_y = data.bricks_offset_y + y1;
-        data.brick_path = [data.n_root_bricks.toString()];
-        data.n_root_bricks++;
-        const new_brick = clone(brick);
-        dispatch(insert({ path: [], source: new_brick }));
-      } else if (brick.is_root) {
-        is_dragging_ref.current = true;
-      } else if ((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) >= 10 * 10) {
-        is_dragging_ref.current = true;
-        console.log("detach");
-        data.brick_path = [data.n_root_bricks.toString()];
-        data.n_root_bricks++;
-        const test = await dispatch(detach({ path: brick.path! }));
-      }
-    } else {
-      dispatch(
-        setBrickOffset({
-          path: data.brick_path,
-          offset: {
-            x: data.brick_offset_x + x1 - x2,
-            y: data.brick_offset_y + y1 - y2,
-          },
-        })
-      );
-    }
-  }, [dispatch]);
-
-  const brick_on_drag_start = useCallback(
-    (data: DragData) => {
-      is_dragging_ref.current = false;
-      const global_offset = get_global_offset(workspace_ref.current);
-      brick_drag_start_data_ref.current = {
-        ...data,
-        bricks_offset_x: parseFloat(froggy_ref.current.style.left),
-        bricks_offset_y: parseFloat(froggy_ref.current.style.top),
-        n_root_bricks: froggy_ref.current.querySelectorAll('.froggy > .wrap').length,
-        brick_offset_x: data.brick.ui.offset?.x,
-        brick_path: [...data.brick.path || []],
-        brick_offset_y: data.brick.ui.offset?.y,
-        workspace_global_x: global_offset.x,
-        workspace_global_y: global_offset.y,
-      };
-      workspace_ref.current.addEventListener("mousemove", brick_on_drag_move);
-      workspace_ref.current.addEventListener("mouseup", brick_on_drag_end);
-      return () => {
-        workspace_ref.current.removeEventListener(
-          "mousemove",
-          brick_on_drag_move
+  const brick_on_drag_move = useCallback(
+    async (e) => {
+      const data = brick_drag_start_data_ref.current;
+      const x1 = e.touches ? e.touches[0].pageX : e.pageX;
+      const y1 = e.touches ? e.touches[0].pageY : e.pageY;
+      const x2 = data.mouse_global_x;
+      const y2 = data.mouse_global_y;
+      const brick = data.brick;
+      if (!is_dragging_ref.current) {
+        if (brick.ui.is_toolbox_brick) {
+          is_dragging_ref.current = true;
+          data.brick_offset_x = data.bricks_offset_x + x1;
+          data.brick_offset_y = data.bricks_offset_y + y1;
+          data.brick_path = [data.n_root_bricks.toString()];
+          data.n_root_bricks++;
+          const new_brick = clone(brick);
+          dispatch(insert({ path: [], source: new_brick }));
+        } else if (brick.is_root) {
+          is_dragging_ref.current = true;
+        } else if ((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) >= 10 * 10) {
+          is_dragging_ref.current = true;
+          data.brick_path = [data.n_root_bricks.toString()];
+          data.n_root_bricks++;
+          dispatch(detach({ path: brick.path! }));
+        }
+      } else {
+        dispatch(
+          setBrickOffset({
+            path: data.brick_path,
+            offset: {
+              x: data.brick_offset_x + x1 - x2,
+              y: data.brick_offset_y + y1 - y2,
+            },
+          })
         );
-        workspace_ref.current.removeEventListener("mouseup", brick_on_drag_end);
-      };
+      }
     },
-    []
+    [dispatch]
   );
 
-  const brick_on_click = useCallback((e) => {
-    active_brick_id_ref.current = undefined;
-  }, []);
-  const brick_on_first_drag = useCallback((e) => {
-    /*
-    const drag_data = brick_drag_start_data;
-    const id = drag_data.id;
-    let brick_data = brick_id_to_data[id];
-    if (brick_data.ui.is_toolbox_brick) {
-      const b = clone(brick_data);
-      b.ui.is_toolbox_brick = false;
-      b.ui.offset.x = drag_data.local_offset.x;
-      b.ui.offset.y = drag_data.local_offset.y;
-      brick_drag_start_data.id = b.id;
-      root_bricks.push(b);
-      brick_id_to_data[b.id] = b;
-      active_brick_id = b.id;
-      brick_data = brick_id_to_data[b.id];
-    } else if (!brick_data.is_root) {
-      const parent = brick_id_to_data[brick_data.ui.parent];
-      const needs_detach =
-        !brick_data.is_static ||
-        !(parent && is_container(parent) && parent.is_static);
-      if (needs_detach) {
-        detach_brick(id, undefined, {
-          x: drag_data.local_offset.x,
-          y: drag_data.local_offset.y,
-        });
-      }
-      if (parent && is_container(parent) && parent.ui.copier) {
-        const new_brick = clone(brick_data);
-        new_brick.ui.parent = parent.id;
-        new_brick.is_root = false;
-        new_brick.root = parent.root;
-        parent.inputs.push(new_brick);
-      }
-    }
-    update_inserting_candidates(brick_data);
-
-    const tail = get_tail(brick_data);
-    active_brick_tail_id = tail.id;
-    */
+  const toolbox_bricks_on_move = useCallback((e) => {
+    is_removing.current = true;
   }, []);
 
-  const on_mouse_move_middleware = useCallback((e) => {
-    /*
-    const event = {
-      pageX: e.touches ? e.touches[0].pageX : e.pageX,
-      pageY: e.touches ? e.touches[0].pageY : e.pageY,
+  const brick_on_drag_start = useCallback((data: DragData) => {
+    is_dragging_ref.current = false;
+    is_removing.current = false;
+    const global_offset = get_global_offset(workspace_ref.current);
+    brick_drag_start_data_ref.current = {
+      ...data,
+      bricks_offset_x: parseFloat(froggy_ref.current.style.left),
+      bricks_offset_y: parseFloat(froggy_ref.current.style.top),
+      n_root_bricks:
+        froggy_ref.current.querySelectorAll(".froggy > .wrap").length,
+      brick_offset_x: data.brick.ui.offset?.x,
+      brick_path: [...(data.brick.path || [])],
+      brick_offset_y: data.brick.ui.offset?.y,
+      workspace_global_x: global_offset.x,
+      workspace_global_y: global_offset.y,
     };
-    if (workspace_is_mouse_down && !active_brick_id) {
-      workspace_on_drag(event);
-      return;
-    }
-    if (!active_brick_id) {
-      return;
-    }
-    brick_on_drag(event);
-    */
+    toolbox_bricks_ref.current.addEventListener(
+      "mousemove",
+      toolbox_bricks_on_move
+    );
+    workspace_ref.current.addEventListener("mousemove", brick_on_drag_move);
+    workspace_ref.current.addEventListener("mouseup", brick_on_drag_end);
   }, []);
-  const on_mouse_up_middleware = useCallback((event) => {
-    /*
-    if (brick_is_dragging) {
-      brick_on_drag_end(event);
-    } else {
-      brick_on_click(event);
-    }
-    workspace_on_drag_end(event);
-    */
-  }, []);
-  const on_mouse_down_middleware = useCallback((e) => {
-    /*
-    const event = {
-      pageX: e.touches ? e.touches[0].pageX : e.pageX,
-      pageY: e.touches ? e.touches[0].pageY : e.pageY,
-    };
-    workspace_on_drag_start(event);
-    */
-  }, []);
-  
+
   const brick_on_drag = (e) => {
     /*
     const drag_data = brick_drag_start_data;
@@ -297,30 +223,21 @@ export function useBrickEvents(workspace_ref: React.RefObject<HTMLDivElement>, f
     // TODO
     */
   };
-  const brick_on_drag_end = useCallback((e) => {
-    console.log('drag end');
-    workspace_ref.current.removeEventListener('mousemove', brick_on_drag_move);
-    workspace_ref.current.removeEventListener('mouseup', brick_on_drag_end);
-    /*
-    if (active_brick_needs_removing) {
-      remove_root_brick(brick_id_to_data[active_brick_id]);
-      active_brick_needs_removing = false;
-    }
-    if (brick_is_inserting) {
-      const active_brick = brick_id_to_data[active_brick_id];
-      const active_brick_tail = brick_id_to_data[active_brick_tail_id];
-      for_each_brick(
-        active_brick,
-        active_brick_tail,
-        (i) => (i.ui.is_ghost = false)
+  const brick_on_drag_end = useCallback(
+    (e) => {
+      console.log("drag end");
+      workspace_ref.current.removeEventListener(
+        "mousemove",
+        brick_on_drag_move
       );
-    }
-    active_brick_id = undefined;
-    brick_is_dragging = false;
-    clear_inserting_candidates();
-    update(() => root_bricks_on_change());
-    */
-  }, [workspace_ref]);
+      workspace_ref.current.removeEventListener("mouseup", brick_on_drag_end);
+      toolbox_bricks_ref.current.removeEventListener(
+        "mousemove",
+        toolbox_bricks_on_move
+      );
+    },
+    [workspace_ref]
+  );
 
   const brick_on_context_menu = useCallback((e: DragData) => {
     /*
@@ -360,5 +277,5 @@ export function useBrickEvents(workspace_ref: React.RefObject<HTMLDivElement>, f
   return {
     brick_on_drag_start,
     brick_on_context_menu,
-  }
+  };
 }

@@ -65,7 +65,7 @@ export const brickSlice = createSlice({
       const brick: Brick = action.payload.path.reduce((m, i) => m[i], state.bricks);
       const type = action.payload.path[action.payload.path.length - 1];
       if (type === "next") {
-        parent.next = parent.next.next;
+        parent.next = null;
         const new_brick = update_path(clone(brick), [state.bricks.length]);
         state.bricks.push(new_brick);
       } else {
