@@ -8,7 +8,7 @@ import { reset, selectAll, setActiveToolbox } from "../brick/brickSlice";
 import { Provider } from 'react-redux';
 import { store } from '../app/store';
 import BrickComponent from '../brick';
-import { get_id, is_container, is_procedure_def, is_procedure_return } from '../util';
+import { get_id, is_container, is_procedure_def, is_procedure_return, update_path } from '../util';
 import {
   deduplicate,
   distance_2d,
@@ -59,13 +59,21 @@ const Workspace = (props: Props) => {
   useEffect(() => {
     dispatch(
       reset({
-        bricks: props.root_bricks,
         atomic_dropdown_menu: props.atomic_dropdown_menu,
-        toolbox: props.toolbox,
         blocks_offset: { x: 0, y: 0 },
+        toolbox: {
+          categories: Object.keys(props.toolbox.categories).reduce((m, i) => {
+            m[i] = props.toolbox.categories[i].map((j, idx) => update_path(clone(j, true, false), [idx]));
+            return m;
+          }, {}),
+          activeCategory: props.toolbox.activeCategory,
+        },
+        bricks: props.root_bricks
+          .map((i) => clone(i))
+          .map((i, idx) => update_path(i, [idx])),
       })
     );
-  }, [props]);
+  }, [props, dispatch]);
 
   const mask_data = {
     brick_id: undefined,

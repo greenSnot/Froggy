@@ -39,11 +39,18 @@ export function useBrickEvents(
       if (!is_dragging_ref.current) {
         if (brick.ui.is_toolbox_brick) {
           is_dragging_ref.current = true;
-          data.brick_offset_x = data.bricks_offset_x + x1;
-          data.brick_offset_y = data.bricks_offset_y + y1;
+          const global_offset = get_global_offset(document.getElementById(get_id(brick)));
+          const offset: Offset = {
+            x: global_offset.x + x1 - x2 - data.bricks_offset_x,
+            y: global_offset.y + y1 - y2 - data.bricks_offset_y - toolbox_bricks_ref.current.scrollTop,
+          };
+          const new_brick = clone(brick);
+          new_brick.ui.offset = offset;
+          data.brick_offset_x = offset.x;
+          data.brick_offset_y = offset.y;
           data.brick_path = [data.n_root_bricks.toString()];
           data.n_root_bricks++;
-          const new_brick = clone(brick);
+
           dispatch(insert({ path: [], source: new_brick }));
         } else if (brick.is_root) {
           is_dragging_ref.current = true;
