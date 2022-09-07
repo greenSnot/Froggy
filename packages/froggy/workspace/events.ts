@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useAppDispatch, useAppSelector } from './app/hooks';
-import { changeBlocksOffsetBy, selectBlocksOffset, setBlocksOffset } from './brick/brickSlice';
-import { Offset } from "./types";
-import { get_global_offset } from './util';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { changeBlocksOffsetBy, selectBlocksOffset, setBlocksOffset } from '../brick/brickSlice';
+import { Offset } from "../types";
+import { get_global_offset } from '../util';
 
 export function useWorkspaceEvents() {
   const workspace_ref = useRef<HTMLDivElement>();

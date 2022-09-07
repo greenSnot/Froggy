@@ -1,14 +1,14 @@
 import React, { ReactElement, ReactHTMLElement, useCallback, useEffect, useRef } from 'react';
 
-import styles from './styles/index.less';
+import styles from '../styles/index.less';
 
-import { useAppSelector, useAppDispatch } from './app/hooks';
-import { reset, selectAll, setActiveToolbox } from "./brick/brickSlice";
+import { useAppSelector, useAppDispatch } from '../app/hooks';
+import { reset, selectAll, setActiveToolbox } from "../brick/brickSlice";
 
 import { Provider } from 'react-redux';
-import { store } from './app/store';
-import BrickComponent from './brick';
-import { get_id, is_container, is_procedure_def, is_procedure_return } from './util';
+import { store } from '../app/store';
+import BrickComponent from '../brick';
+import { get_id, is_container, is_procedure_def, is_procedure_return } from '../util';
 import {
   deduplicate,
   distance_2d,
@@ -17,18 +17,18 @@ import {
   clone,
   for_each_brick,
   get_tail,
-} from './util';
+} from '../util';
 
 import {
   Brick,
   AtomicBrickEnum,
   DragData,
   BrickOutput,
-} from './types';
+} from '../types';
 
-import { useWorkspaceEvents } from './workspace_events';
-import { Context } from './context';
-import { useBrickEvents } from './brick/brick_events';
+import { useWorkspaceEvents } from './events';
+import { Context } from '../context';
+import { useBrickEvents } from '../brick/events';
 
 type Props = {
   id: string,
