@@ -13,6 +13,7 @@ export interface DragState {
   brick_offset_x?: number;
   brick_offset_y?: number;
   brick_path?: string[];
+  tail_relative_path?: string[];
   drag_start_global_x?: number;
   drag_start_global_y?: number;
   workspace_global_x?: number;
@@ -22,7 +23,7 @@ export interface DragState {
   inserting_candidates?: {path: string[], offset?: Offset}[];
 }
 
-const detach_distance = 10;
+const detach_distance = 15;
 const drag_state: DragState = {};
 
 const updateInsertingCandidates = (bricks: Brick[], path: string[]) => {
@@ -126,12 +127,8 @@ export function useBrickEvents(
       const y2 = drag_state.drag_start_global_y;
       const bricks = drag_state.bricks;
       const brick: Brick = drag_state.brick_path.reduce((m, i) => m[i], bricks);
-      if (!brick) {
-        debugger;
-      }
       if (!drag_state.is_dragging) {
         if (brick.ui.is_toolbox_brick) {
-          console.log('a')
           drag_state.is_dragging = true;
           const global_offset = get_global_offset(
             document.getElementById(get_id(brick))
@@ -153,7 +150,6 @@ export function useBrickEvents(
         } else if (brick.is_root) {
           drag_state.is_dragging = true;
         } else if (distance_2d(x1, y1, x2, y2) >= detach_distance) {
-          console.log('c')
           drag_state.is_dragging = true;
           const global_offset = get_global_offset(
             document.getElementById(get_id(brick))
@@ -188,13 +184,21 @@ export function useBrickEvents(
         )[0];
         // console.log(state.drag_state.inserting_candidates.map(i => ({path: [...i.path], offset: {...i.offset}})));
         if (insert_target) {
-          console.log(insert_target.path)
           const target = insert_target.path.reduce((m, i) => m[i], bricks);
-          const new_path = insert(bricks, { path: target.path, source: clone(brick) });
+          const new_brick = clone(brick);
+          new_brick.is_root = false;
+          new_brick.ui.offset = { x: 0, y: 0 };
+          const new_path = insert(bricks, {
+            path: target.path,
+            source: new_brick,
+          });
           removeRootBrickByIdx(bricks, parseInt(drag_state.brick_path[0]));
           drag_state.brick_path = new_path;
           drag_state.is_dragging = false;
-        if (bricks.length == 2) debugger;
+          const tail: Brick = drag_state.brick_path
+            .concat(drag_state.tail_relative_path)
+            .reduce((m, i) => m[i], bricks);
+          for_each_brick(new_brick, tail, (b) => (b.ui.is_ghost = true));
         }
       }
       dispatch(setBricks(bricks));
@@ -208,6 +212,8 @@ export function useBrickEvents(
 
   const brick_on_drag_start = useCallback((data: DragData) => {
     const global_offset = get_global_offset(workspace_ref.current);
+    let tail = data.brick;
+    while (tail.next) tail = tail.next;
     Object.assign(drag_state, {
       drag_start_global_x: data.drag_start_global_x,
       drag_start_global_y: data.drag_start_global_y,
@@ -215,7 +221,8 @@ export function useBrickEvents(
       is_removing: false,
       bricks_offset_x: parseFloat(froggy_ref.current.style.left),
       bricks_offset_y: parseFloat(froggy_ref.current.style.top),
-      brick_path: [...(data.brick.path || [])],
+      brick_path: [...data.brick.path],
+      tail_relative_path: [...tail.path.slice(data.brick.path.length)],
       brick_offset_x: data.brick.ui.offset?.x,
       brick_offset_y: data.brick.ui.offset?.y,
       workspace_global_x: global_offset.x,
@@ -231,6 +238,15 @@ export function useBrickEvents(
 
   const brick_on_drag_end = useCallback(
     (e) => {
+      const brick = drag_state.brick_path.reduce(
+        (m, i) => m[i],
+        drag_state.bricks
+      );
+      const tail: Brick = drag_state.brick_path
+        .concat(drag_state.tail_relative_path)
+        .reduce((m, i) => m[i], drag_state.bricks);
+      for_each_brick(brick, tail, (b) => (b.ui.is_ghost = false));
+      dispatch(setBricks(drag_state.bricks));
       workspace_ref.current.removeEventListener(
         "mousemove",
         brick_on_drag_move
