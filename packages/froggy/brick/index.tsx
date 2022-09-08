@@ -45,11 +45,10 @@ const BrickComponent = ({ data, interactable_parent }: Props) => {
   const on_mouse_down = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       e.stopPropagation();
-      console.log('b d')
       brick_on_drag_start({
         brick: interactable_brick,
-        mouse_global_x: e.pageX,
-        mouse_global_y: e.pageY,
+        drag_start_global_x: e.pageX,
+        drag_start_global_y: e.pageY,
       });
     },
     [interactable_brick, brick_on_drag_start]
@@ -61,8 +60,8 @@ const BrickComponent = ({ data, interactable_parent }: Props) => {
       e.stopPropagation();
       brick_on_context_menu({
         brick: interactable_brick,
-        mouse_global_x: e.pageX,
-        mouse_global_y: e.pageY,
+        drag_start_global_x: e.pageX,
+        drag_start_global_y: e.pageY,
       });
     },
     [brick_on_context_menu, interactable_brick]

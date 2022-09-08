@@ -59,7 +59,6 @@ const Workspace = (props: Props) => {
   useEffect(() => {
     dispatch(
       reset({
-        drag_state: {},
         atomic_dropdown_menu: props.atomic_dropdown_menu,
         blocks_offset: { x: 0, y: 0 },
         toolbox: {

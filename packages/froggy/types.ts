@@ -1,8 +1,8 @@
 export type BrickId = string;
 export type DragData = {
   brick: Brick;
-  mouse_global_x: number,
-  mouse_global_y: number,
+  drag_start_global_x: number,
+  drag_start_global_y: number,
 };
 export enum BrickOutput {
   void,

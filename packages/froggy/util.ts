@@ -33,6 +33,21 @@ export const flatten = (i) => {
   return res;
 };
 
+export const deep_clone = (x) => {
+  const do_deep_clone = (t) => {
+    if (t instanceof Array) {
+      return t.map((i) => do_deep_clone(i));
+    } else if (typeof t === "object" && t != null) {
+      return Object.keys(t).reduce((m, i) => {
+        m[i] = do_deep_clone(t[i]);
+        return m;
+      }, {});
+    }
+    return t;
+  };
+  return do_deep_clone(x);
+};
+
 export const clone = (brick: Brick, with_ui = true, remove_toolbox_flag = true) => {
   let root;
   const do_clone = (b: Brick, prev: BrickId, parent = undefined) => {
@@ -116,8 +131,8 @@ export const to_id = (path: string[], scope: 'toolbox' | 'workspace') => {
 export function update_path(brick: Brick, default_path = []) {
   const s = (brick: Brick, path) => {
     brick.path = path;
-    brick.inputs && brick.inputs.forEach((i, idx) => s(i, [...path, 'inputs', idx]));
-    brick.parts && brick.parts.forEach((i, idx) => s(i, [...path, 'parts', idx]));
+    brick.inputs && brick.inputs.forEach((i, idx) => s(i, [...path, 'inputs', idx.toString()]));
+    brick.parts && brick.parts.forEach((i, idx) => s(i, [...path, 'parts', idx.toString()]));
     brick.next && s(brick.next, [...path, 'next']);
   };
   s(brick, default_path);

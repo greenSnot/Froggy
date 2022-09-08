@@ -3,8 +3,76 @@ import React, { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { AppThunk } from "../app/store";
 import { Brick, BrickOutput, DragData, Offset } from "../types";
-import { clone, for_each_brick, get_global_offset, get_id, is_container, to_id } from "../util";
-import { brickOnDragMove, brickOnDragStart, BrickState, detach, insert, selectAll, selectBlocksOffset, setBlocksOffset, setBrickOffset, toolboxBricksOnMove } from "./brickSlice";
+import { clone, deep_clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id } from "../util";
+import { BrickState, detach, insert, removeRootBrickByIdx, selectAll, selectBlocksOffset, selectBricks, setBlocksOffset, setBrickOffset, setBricks } from "./brickSlice";
+
+export interface DragState {
+  bricks?: Brick[];
+  bricks_offset_x?: number;
+  bricks_offset_y?: number;
+  brick_offset_x?: number;
+  brick_offset_y?: number;
+  brick_path?: string[];
+  drag_start_global_x?: number;
+  drag_start_global_y?: number;
+  workspace_global_x?: number;
+  workspace_global_y?: number;
+  is_dragging?: boolean;
+  is_removing?: boolean;
+  inserting_candidates?: {path: string[], offset?: Offset}[];
+}
+
+const detach_distance = 10;
+const drag_state: DragState = {};
+
+const updateInsertingCandidates = (bricks: Brick[], path: string[]) => {
+  const current: Brick = path.reduce((m, i) => m[i], bricks);
+  drag_state.inserting_candidates = [];
+  if (current.ui.show_hat) {
+    return;
+  }
+  if (current.output) {
+    bricks.forEach((i) =>
+      for_each_brick(i, undefined, (brick) => {
+        if (brick === current || brick.is_static) {
+          return;
+        }
+        if (
+          is_container(brick) &&
+          (brick.output === current.output ||
+            brick.output === BrickOutput.any ||
+            current.output === BrickOutput.any)
+        ) {
+          const offset = get_global_offset(
+            document.getElementById(to_id(brick.path, "workspace"))
+          );
+
+          drag_state.inserting_candidates.push({
+            path: brick.path,
+            offset,
+          });
+        }
+      })
+    );
+    return;
+  }
+  bricks.forEach((i) =>
+    for_each_brick(i, undefined, (brick) => {
+      if (
+        brick !== current &&
+        (brick.inputs || (brick.parts && brick.parts.length > 1))
+      ) {
+        const offset = get_global_offset(
+          document.getElementById(to_id(brick.path, "workspace"))
+        );
+        drag_state.inserting_candidates.push({
+          path: brick.path,
+          offset,
+        });
+      }
+    })
+  );
+};
 
 export function useBrickEvents(
   workspace_ref: React.RefObject<HTMLDivElement>,
@@ -13,43 +81,116 @@ export function useBrickEvents(
 ) {
 
   const dispatch = useAppDispatch();
+  const bricks = useAppSelector(selectBricks);
+
+  useEffect(() => {
+    drag_state.bricks = deep_clone(bricks);
+  }, [bricks]);
+
+  /**
+   * drag_data 与 dom 同步
+   * onDragMove 依赖 getGlobalOffset
+   * store 无法与 drag_data 同步
+   * 
+   * dragstart clone(state)
+   * dragmove/end 修改cloned_state dispatch setstate
+   */
   const brick_on_drag_move = useCallback(
     (e) => {
-      const mouse_x = e.touches ? e.touches[0].pageX : e.pageX;
-      const mouse_y = e.touches ? e.touches[0].pageY : e.pageY;
-      dispatch(
-        brickOnDragMove({
-          mouse_x,
-          mouse_y,
-          toolbox_bricks_scroll_top: toolbox_bricks_ref.current.scrollTop,
-        })
-      );
+      const toolbox_bricks_scroll_top = toolbox_bricks_ref.current.scrollTop;
+      const x1 = e.touches ? e.touches[0].pageX : e.pageX;
+      const y1 = e.touches ? e.touches[0].pageY : e.pageY;
+      const x2 = drag_state.drag_start_global_x;
+      const y2 = drag_state.drag_start_global_y;
+      const bricks = drag_state.bricks;
+      const brick: Brick = drag_state.brick_path.reduce((m, i) => m[i], bricks);
+      if (!drag_state.is_dragging) {
+        if (brick.ui.is_toolbox_brick) {
+          drag_state.is_dragging = true;
+          const global_offset = get_global_offset(
+            document.getElementById(get_id(brick))
+          );
+          const offset: Offset = {
+            x: global_offset.x + x1 - x2 - drag_state.bricks_offset_x,
+            y:
+              global_offset.y +
+              y1 -
+              y2 -
+              drag_state.bricks_offset_y -
+              toolbox_bricks_scroll_top,
+          };
+          const new_brick = clone(brick);
+          new_brick.ui.offset = offset;
+          drag_state.brick_offset_x = offset.x;
+          drag_state.brick_offset_y = offset.y;
+          drag_state.brick_path = [bricks.length.toString()];
+          insert(bricks, { path: [], source: new_brick });
+        } else if (brick.is_root) {
+          drag_state.is_dragging = true;
+        } else if (distance_2d(x1, y1, x2, y2) >= detach_distance) {
+          drag_state.is_dragging = true;
+          const global_offset = get_global_offset(
+            document.getElementById(get_id(brick))
+          );
+          const offset: Offset = {
+            x: global_offset.x + x1 - x2 - drag_state.bricks_offset_x,
+            y: global_offset.y + y1 - y2 - drag_state.bricks_offset_y,
+          };
+          drag_state.brick_offset_x = offset.x;
+          drag_state.brick_offset_y = offset.y;
+          drag_state.brick_path = [bricks.length.toString()];
+          detach(bricks, { path: brick.path!, offset });
+        }
+        updateInsertingCandidates(bricks, drag_state.brick_path);
+      } else {
+        const new_offset: Offset = {
+          x: drag_state.brick_offset_x + x1 - x2,
+          y: drag_state.brick_offset_y + y1 - y2,
+        };
+        setBrickOffset(bricks, {
+          path: drag_state.brick_path,
+          offset: new_offset,
+        });
+        const insert_target = drag_state.inserting_candidates.filter(
+          (i) =>
+            distance_2d(
+              i.offset.x - drag_state.bricks_offset_x,
+              i.offset.y - drag_state.bricks_offset_y,
+              new_offset.x,
+              new_offset.y
+            ) < detach_distance
+        )[0];
+        // console.log(state.drag_state.inserting_candidates.map(i => ({path: [...i.path], offset: {...i.offset}})));
+        if (insert_target) {
+          const target = insert_target.path.reduce((m, i) => m[i], bricks);
+          insert(bricks, { path: target.path, source: clone(brick) });
+          removeRootBrickByIdx(bricks, parseInt(drag_state.brick_path[0]));
+        }
+      }
+      dispatch(setBricks(bricks));
     },
     [dispatch]
   );
 
   const toolbox_bricks_on_move = useCallback((e) => {
-    dispatch(toolboxBricksOnMove());
-  }, [dispatch]);
+    drag_state.is_removing = true;
+  }, []);
 
   const brick_on_drag_start = useCallback((data: DragData) => {
     const global_offset = get_global_offset(workspace_ref.current);
-    dispatch(
-      brickOnDragStart({
-        ...data,
-        is_dragging: false,
-        is_removing: false,
-        bricks_offset_x: parseFloat(froggy_ref.current.style.left),
-        bricks_offset_y: parseFloat(froggy_ref.current.style.top),
-        n_root_bricks:
-          froggy_ref.current.querySelectorAll(".froggy > .wrap").length,
-        brick_offset_x: data.brick.ui.offset?.x,
-        brick_path: [...(data.brick.path || [])],
-        brick_offset_y: data.brick.ui.offset?.y,
-        workspace_global_x: global_offset.x,
-        workspace_global_y: global_offset.y,
-      })
-    );
+    Object.assign(drag_state, {
+      drag_start_global_x: data.drag_start_global_x,
+      drag_start_global_y: data.drag_start_global_y,
+      is_dragging: false,
+      is_removing: false,
+      bricks_offset_x: parseFloat(froggy_ref.current.style.left),
+      bricks_offset_y: parseFloat(froggy_ref.current.style.top),
+      brick_path: [...(data.brick.path || [])],
+      brick_offset_x: data.brick.ui.offset?.x,
+      brick_offset_y: data.brick.ui.offset?.y,
+      workspace_global_x: global_offset.x,
+      workspace_global_y: global_offset.y,
+    });
     toolbox_bricks_ref.current.addEventListener(
       "mousemove",
       toolbox_bricks_on_move
@@ -60,7 +201,6 @@ export function useBrickEvents(
 
   const brick_on_drag_end = useCallback(
     (e) => {
-      console.log("drag end");
       workspace_ref.current.removeEventListener(
         "mousemove",
         brick_on_drag_move

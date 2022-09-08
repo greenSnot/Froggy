@@ -1,24 +1,7 @@
 import { createAsyncThunk, createListenerMiddleware, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState, AppThunk } from '../app/store';
 import { Brick, BrickOutput, DragData, Offset } from '../types';
-import { clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id, update_path } from '../util';
-
-export interface DragState {
-  brick?: Brick;
-  bricks_offset_x?: number;
-  bricks_offset_y?: number;
-  brick_offset_x?: number;
-  brick_offset_y?: number;
-  n_root_bricks?: number;
-  brick_path?: string[];
-  mouse_global_x?: number;
-  mouse_global_y?: number;
-  workspace_global_x?: number;
-  workspace_global_y?: number;
-  is_dragging?: boolean;
-  is_removing?: boolean;
-  inserting_candidates?: {path: string[], offset?: Offset}[];
-}
+import { clone, deep_clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id, update_path } from '../util';
 
 export interface BrickState {
   blocks_offset: Offset,
@@ -28,68 +11,16 @@ export interface BrickState {
     activeCategory: string,
   },
   atomic_dropdown_menu: {[id: string]: {[name: string]: any}},
-  drag_state: DragState;
 };
 
 const initialState: BrickState = {
   bricks: [],
-  drag_state: {},
   blocks_offset: { x: 0, y: 0 },
   toolbox: {
     categories: {},
     activeCategory: "",
   },
   atomic_dropdown_menu: {},
-};
-
-const updateInsertingCandidates = (state: BrickState, path: string[]) => {
-  const current: Brick = path.reduce((m, i) => m[i], state.bricks);
-  const drag_state = state.drag_state;
-  drag_state.inserting_candidates = [];
-  if (current.ui.show_hat) {
-    return;
-  }
-  if (current.output) {
-    state.bricks.forEach((i) =>
-      for_each_brick(i, undefined, (brick) => {
-        if (brick === current || brick.is_static) {
-          return;
-        }
-        if (
-          is_container(brick) &&
-          (brick.output === current.output ||
-            brick.output === BrickOutput.any ||
-            current.output === BrickOutput.any)
-        ) {
-          const offset = get_global_offset(
-            document.getElementById(to_id(brick.path, "workspace"))
-          );
-
-          drag_state.inserting_candidates.push({
-            path: brick.path,
-            offset,
-          });
-        }
-      })
-    );
-    return;
-  }
-  state.bricks.forEach((i) =>
-    for_each_brick(i, undefined, (brick) => {
-      if (
-        brick !== current &&
-        (brick.inputs || (brick.parts && brick.parts.length > 1))
-      ) {
-        const offset = get_global_offset(
-          document.getElementById(to_id(brick.path, "workspace"))
-        );
-        drag_state.inserting_candidates.push({
-          path: brick.path,
-          offset,
-        });
-      }
-    })
-  );
 };
 
 export const brickSlice = createSlice({
@@ -100,94 +31,8 @@ export const brickSlice = createSlice({
     setActiveToolbox: (state, action: PayloadAction<string>) => {
       state.toolbox.activeCategory = action.payload;
     },
-    brickOnDragStart: (state, action: PayloadAction<DragState>) => {
-      state.drag_state = action.payload;
-    },
-    toolboxBricksOnMove: (state, action: PayloadAction) => {
-      state.drag_state.is_removing = true;
-    },
-    brickOnDragEnd: (state, action: PayloadAction) => {},
-    brickOnDragMove: (
-      state,
-      action: PayloadAction<{
-        mouse_x: number;
-        mouse_y: number;
-        toolbox_bricks_scroll_top: number;
-      }>
-    ) => {
-      const { mouse_x, mouse_y, toolbox_bricks_scroll_top } = action.payload;
-      const data = state.drag_state;
-      const x1 = mouse_x;
-      const y1 = mouse_y;
-      const x2 = data.mouse_global_x;
-      const y2 = data.mouse_global_y;
-      const brick: Brick = data.brick;
-      if (!data.is_dragging) {
-        if (brick.ui.is_toolbox_brick) {
-          data.is_dragging = true;
-          const global_offset = get_global_offset(
-            document.getElementById(get_id(brick))
-          );
-          const offset: Offset = {
-            x: global_offset.x + x1 - x2 - data.bricks_offset_x,
-            y:
-              global_offset.y +
-              y1 -
-              y2 -
-              data.bricks_offset_y -
-              toolbox_bricks_scroll_top,
-          };
-          const new_brick = clone(brick);
-          new_brick.ui.offset = offset;
-          data.brick_offset_x = offset.x;
-          data.brick_offset_y = offset.y;
-          data.brick_path = [data.n_root_bricks.toString()];
-          data.n_root_bricks++;
-          insert(state, { path: [], source: new_brick });
-        } else if (brick.is_root) {
-          data.is_dragging = true;
-        } else if (distance_2d(x1, y1, x2, y2) >= 10) {
-          data.is_dragging = true;
-          const global_offset = get_global_offset(
-            document.getElementById(get_id(brick))
-          );
-          const offset: Offset = {
-            x: global_offset.x + x1 - x2 - data.bricks_offset_x,
-            y: global_offset.y + y1 - y2 - data.bricks_offset_y,
-          };
-          data.brick_offset_x = offset.x;
-          data.brick_offset_y = offset.y;
-          data.brick_path = [data.n_root_bricks.toString()];
-          data.n_root_bricks++;
-          detach(state, { path: brick.path!, offset });
-        }
-        updateInsertingCandidates(state, data.brick_path);
-      } else {
-        const new_offset: Offset = {
-          x: data.brick_offset_x + x1 - x2,
-          y: data.brick_offset_y + y1 - y2,
-        };
-        setBrickOffset(state, {
-          path: data.brick_path,
-          offset: new_offset,
-        });
-        const insert_target = state.drag_state.inserting_candidates.filter(
-          (i) =>
-            distance_2d(
-              i.offset.x - data.bricks_offset_x,
-              i.offset.y - data.bricks_offset_y,
-              new_offset.x,
-              new_offset.y
-            ) < 10
-        )[0];
-        // console.log(state.drag_state.inserting_candidates.map(i => ({path: [...i.path], offset: {...i.offset}})));
-        if (insert_target) {
-          const target = insert_target.path.reduce((m, i) => m[i], state.bricks);
-          insert(state, { path: target.path, source: clone(data.brick) });
-          removeRootBrickByIdx(state, parseInt(data.brick_path[0]));
-          data.brick_path = [...target.path, 'next'];
-        }
-      }
+    setBricks: (state, action: PayloadAction<Brick[]>) => {
+      state.bricks = action.payload;
     },
     reset: (state, action: PayloadAction<BrickState>) => {
       return {
@@ -219,18 +64,16 @@ export const brickSlice = createSlice({
   },
   // The `extraReducers` field lets the slice handle actions defined elsewhere,
   // including actions generated by createAsyncThunk or in other slices.
-  extraReducers: (builder) => {},
+  extraReducers: (builder) => {
+  },
 });
 
 export const {
   setBlocksOffset,
   changeBlocksOffsetBy,
   reset,
-  brickOnDragMove,
-  toolboxBricksOnMove,
-  brickOnDragStart,
-  brickOnDragEnd,
   setActiveToolbox,
+  setBricks,
 } = brickSlice.actions;
 
 export const selectBlocksOffset = (state: RootState) => {
@@ -238,27 +81,27 @@ export const selectBlocksOffset = (state: RootState) => {
 }
 
 export const setBrickOffset = (
-  state: BrickState,
+  bricks: Brick[],
   payload: { path: string[]; offset: Offset }
 ) => {
-  const brick: Brick = payload.path.reduce((m, i) => m[i], state.bricks);
+  const brick: Brick = payload.path.reduce((m, i) => m[i], bricks);
   brick.ui.offset = payload.offset;
 };
 
-export const removeRootBrickByIdx = (state: BrickState, payload: number) => {
-  state.bricks.splice(payload, 1);
-  state.bricks.forEach((i, idx) => update_path(i, [idx]));
+export const removeRootBrickByIdx = (bricks: Brick[], payload: number) => {
+  bricks.splice(payload, 1);
+  bricks.forEach((i, idx) => update_path(i, [idx]));
 };
 
 export const insert = (
-  state: BrickState,
+  bricks: Brick[],
   payload: { path: string[]; source: Brick }
 ) => {
   const brick = payload.source;
   if (!payload.path.length) {
-    state.bricks.push(brick);
+    bricks.push(brick);
   } else {
-    const parent: Brick = payload.path.reduce((m, i) => m[i], state.bricks);
+    const parent: Brick = payload.path.reduce((m, i) => m[i], bricks);
     const t = parent.next;
     parent.next = brick;
     brick.next = t;
@@ -266,22 +109,22 @@ export const insert = (
 };
 
 export const detach = (
-  state: BrickState,
+  bricks: Brick[],
   payload: { path: string[]; offset: Offset },
 ) => {
   const parent: Brick = payload.path
     .slice(0, -1)
-    .reduce((m, i) => m[i], state.bricks);
+    .reduce((m, i) => m[i], bricks);
   const brick: Brick = payload.path.reduce(
     (m, i) => m[i],
-    state.bricks
+    bricks
   );
   const type = payload.path[payload.path.length - 1];
   if (type === "next") {
     parent.next = null;
-    const new_brick = update_path(clone(brick), [state.bricks.length]);
+    const new_brick = update_path(clone(brick), [bricks.length]);
     new_brick.ui.offset = payload.offset;
-    state.bricks.push(new_brick);
+    bricks.push(new_brick);
   } else {
     // TODO
   }
@@ -289,6 +132,10 @@ export const detach = (
 
 export const selectAll = (state: RootState) => {
   return state.brick;
+}
+
+export const selectBricks = (state: RootState) => {
+  return state.brick.bricks;
 }
 
 export default brickSlice.reducer;
