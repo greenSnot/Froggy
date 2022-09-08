@@ -57,20 +57,42 @@ const updateInsertingCandidates = (bricks: Brick[], path: string[]) => {
     return;
   }
   bricks.forEach((i) =>
-    for_each_brick(i, undefined, (brick) => {
-      if (
-        brick !== current &&
-        (brick.inputs || (brick.parts && brick.parts.length > 1))
-      ) {
-        const offset = get_global_offset(
-          document.getElementById(to_id(brick.path, "workspace"))
-        );
-        drag_state.inserting_candidates.push({
-          path: brick.path,
-          offset,
-        });
+    for_each_brick(
+      i,
+      undefined,
+      (brick) => {
+        if (
+          (brick.inputs || (brick.parts && brick.parts.length > 1)) &&
+          brick !== current &&
+          brick.next !== undefined
+        ) {
+          const ele = document.getElementById(to_id(brick.path, "workspace"));
+          const offset = get_global_offset(ele);
+          if (brick.path[brick.path.length - 2] == "parts") {
+            offset.x += 15;
+          }
+          if (brick.inputs) {
+            offset.y += document.querySelector(
+              `#${to_id(brick.path, "workspace")} > .inputs`
+            ).clientHeight;
+          } else if (brick.parts) {
+            offset.y += document.querySelector(
+              `#${to_id(brick.path, "workspace")} > .parts`
+            ).clientHeight;
+          }
+
+          drag_state.inserting_candidates.push({
+            path: brick.path,
+            offset,
+          });
+        }
+      },
+      {
+        inputs: false,
+        parts: true,
+        next: true,
       }
-    })
+    )
   );
 };
 
@@ -104,8 +126,12 @@ export function useBrickEvents(
       const y2 = drag_state.drag_start_global_y;
       const bricks = drag_state.bricks;
       const brick: Brick = drag_state.brick_path.reduce((m, i) => m[i], bricks);
+      if (!brick) {
+        debugger;
+      }
       if (!drag_state.is_dragging) {
         if (brick.ui.is_toolbox_brick) {
+          console.log('a')
           drag_state.is_dragging = true;
           const global_offset = get_global_offset(
             document.getElementById(get_id(brick))
@@ -123,11 +149,11 @@ export function useBrickEvents(
           new_brick.ui.offset = offset;
           drag_state.brick_offset_x = offset.x;
           drag_state.brick_offset_y = offset.y;
-          drag_state.brick_path = [bricks.length.toString()];
-          insert(bricks, { path: [], source: new_brick });
+          drag_state.brick_path = insert(bricks, { path: [], source: new_brick });
         } else if (brick.is_root) {
           drag_state.is_dragging = true;
         } else if (distance_2d(x1, y1, x2, y2) >= detach_distance) {
+          console.log('c')
           drag_state.is_dragging = true;
           const global_offset = get_global_offset(
             document.getElementById(get_id(brick))
@@ -138,8 +164,8 @@ export function useBrickEvents(
           };
           drag_state.brick_offset_x = offset.x;
           drag_state.brick_offset_y = offset.y;
-          drag_state.brick_path = [bricks.length.toString()];
-          detach(bricks, { path: brick.path!, offset });
+          console.log('detach')
+          drag_state.brick_path = detach(bricks, { path: brick.path!, offset });
         }
         updateInsertingCandidates(bricks, drag_state.brick_path);
       } else {
@@ -162,9 +188,13 @@ export function useBrickEvents(
         )[0];
         // console.log(state.drag_state.inserting_candidates.map(i => ({path: [...i.path], offset: {...i.offset}})));
         if (insert_target) {
+          console.log(insert_target.path)
           const target = insert_target.path.reduce((m, i) => m[i], bricks);
-          insert(bricks, { path: target.path, source: clone(brick) });
+          const new_path = insert(bricks, { path: target.path, source: clone(brick) });
           removeRootBrickByIdx(bricks, parseInt(drag_state.brick_path[0]));
+          drag_state.brick_path = new_path;
+          drag_state.is_dragging = false;
+        if (bricks.length == 2) debugger;
         }
       }
       dispatch(setBricks(bricks));

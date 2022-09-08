@@ -122,10 +122,10 @@ export const is_procedure = (brick: Brick) => brick.type === 'procedure';
 export const is_procedure_with_output = (brick: Brick) => brick.type === 'procedure_with_output';
 export const is_procedure_return = (brick: Brick) => brick.type === 'procedure_return';
 export const get_id = (brick: Brick) => {
- return `${brick.ui.is_toolbox_brick ? 'toolbox' : 'workspace'}/${brick.path.join('-')}`;
+ return `${brick.ui.is_toolbox_brick ? 'toolbox' : 'workspace'}_${brick.path.join('-')}`;
 }
 export const to_id = (path: string[], scope: 'toolbox' | 'workspace') => {
- return `${scope}/${path.join('-')}`;
+ return `${scope}_${path.join('-')}`;
 }
 
 export function update_path(brick: Brick, default_path = []) {
