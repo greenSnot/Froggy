@@ -48,33 +48,40 @@ export const deep_clone = (x) => {
   return do_deep_clone(x);
 };
 
-export const clone = (brick: Brick, with_ui = true, remove_toolbox_flag = true) => {
-  let root;
-  const do_clone = (b: Brick, prev: BrickId, parent = undefined) => {
-    const id = gen_id();
-    root = root || id;
+export const clone_brick = (
+  brick: Brick,
+  {
+    remove_toolbox_flag,
+    tail_relative_path,
+  }: {
+    remove_toolbox_flag: boolean;
+    tail_relative_path?: string[];
+  } = {
+    remove_toolbox_flag: true,
+    tail_relative_path: undefined,
+  }
+) => {
+  const do_clone = (b: Brick, depth = 0) => {
     const res = {
       ...b,
-      parts: b.parts ? b.parts.map(i => do_clone(i, undefined, id)) : undefined,
-      inputs: b.inputs ? b.inputs.map(i => do_clone(i, undefined, id)) : undefined,
-      root,
-      prev: b.output ? undefined : prev,
-      id,
+      parts: b.parts ? b.parts.map((i) => do_clone(i, -Infinity)) : undefined,
+      inputs: b.inputs ? b.inputs.map((i) => do_clone(i, -Infinity)) : undefined,
     } as Brick;
-    if (with_ui) {
-      res.ui = {
-        ...b.ui,
-      };
-      remove_toolbox_flag && delete res.ui.is_toolbox_brick;
-      delete res.ui.is_removing;
-      delete res.ui.is_ghost;
-    }
+    res.ui = {
+      ...b.ui,
+    };
+    remove_toolbox_flag && delete res.ui.is_toolbox_brick;
+    delete res.ui.is_removing;
+    delete res.ui.is_ghost;
     if (b.next !== undefined) {
-      res.next = b.next === null ? null : do_clone(b.next, id);
+      res.next =
+        b.next === null || (tail_relative_path && depth == tail_relative_path.length)
+          ? null
+          : do_clone(b.next, depth + 1);
     }
     return res;
   };
-  const root_brick = do_clone(brick, undefined);
+  const root_brick = do_clone(brick);
   root_brick.ui.offset = {
     x: root_brick.ui.offset?.x || 0,
     y: root_brick.ui.offset?.y || 0,

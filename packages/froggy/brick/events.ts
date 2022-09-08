@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { AppThunk } from "../app/store";
 import { Brick, BrickOutput, DragData, Offset } from "../types";
-import { clone, deep_clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id } from "../util";
+import { clone_brick, deep_clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id } from "../util";
 import { BrickState, detach, move, selectAll, selectBlocksOffset, selectBricks, setBlocksOffset, setBrickOffset, setBricks } from "./brickSlice";
 
 export interface DragState {
@@ -143,11 +143,12 @@ export function useBrickEvents(
               drag_state.bricks_offset_y -
               toolbox_bricks_scroll_top,
           };
-          const new_brick = clone(brick);
-          new_brick.ui.offset = offset;
+          const new_brick = clone_brick(brick);
           drag_state.brick_offset_x = offset.x;
           drag_state.brick_offset_y = offset.y;
-          drag_state.brick_path = move(bricks, { path: [], source: new_brick });
+          bricks.push(new_brick);
+          drag_state.brick_path = [(bricks.length - 1).toString()];
+          new_brick.ui.offset = offset;
         } else if (brick.is_root) {
           drag_state.is_dragging = true;
         } else if (distance_2d(x1, y1, x2, y2) >= detach_distance) {
@@ -162,7 +163,7 @@ export function useBrickEvents(
           drag_state.brick_offset_x = offset.x;
           drag_state.brick_offset_y = offset.y;
           console.log('detach')
-          drag_state.brick_path = detach(bricks, { path: brick.path!, offset });
+          drag_state.brick_path = detach(bricks, { path: brick.path!, tail_relative_path: drag_state.tail_relative_path, offset });
         }
         updateInsertingCandidates(bricks, drag_state.brick_path);
       } else {
@@ -186,22 +187,25 @@ export function useBrickEvents(
         // console.log(state.drag_state.inserting_candidates.map(i => ({path: [...i.path], offset: {...i.offset}})));
         if (insert_target) {
           const target = insert_target.path.reduce((m, i) => m[i], bricks);
-          const new_brick = clone(brick);
-          new_brick.is_root = false;
-          new_brick.ui.offset = { x: 0, y: 0 };
           const new_path = move(bricks, {
-            path: target.path,
-            source: new_brick,
+            target_path: target.path,
+            source_path: drag_state.brick_path,
+            tail_relative_path: drag_state.tail_relative_path,
           });
           drag_state.brick_path = new_path;
           drag_state.is_dragging = false;
 
-          // drag_state.drag_start_global_x = insert_target.offset.x - drag_state.bricks_offset_x;
-          // drag_state.drag_start_global_y = insert_target.offset.y - drag_state.bricks_offset_y;
+          drag_state.drag_start_global_x = x1;
+          drag_state.drag_start_global_y = y1;
 
           const tail: Brick = drag_state.brick_path
             .concat(drag_state.tail_relative_path)
             .reduce((m, i) => m[i], bricks);
+          const new_brick = drag_state.brick_path.reduce(
+            (m, i) => m[i],
+            bricks
+          );
+
           for_each_brick(new_brick, tail, (b) => (b.ui.is_ghost = true));
         }
       }

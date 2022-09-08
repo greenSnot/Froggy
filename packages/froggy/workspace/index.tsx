@@ -14,7 +14,7 @@ import {
   distance_2d,
   flatten,
   get_global_offset,
-  clone,
+  clone_brick,
   for_each_brick,
   get_tail,
 } from '../util';
@@ -63,13 +63,21 @@ const Workspace = (props: Props) => {
         blocks_offset: { x: 0, y: 0 },
         toolbox: {
           categories: Object.keys(props.toolbox.categories).reduce((m, i) => {
-            m[i] = props.toolbox.categories[i].map((j, idx) => update_path(clone(j, true, false), [idx]));
+            m[i] = props.toolbox.categories[i].map((j, idx) =>
+              update_path(
+                clone_brick(j, {
+                  remove_toolbox_flag: false,
+                  tail_relative_path: [],
+                }),
+                [idx]
+              )
+            );
             return m;
           }, {}),
           activeCategory: props.toolbox.activeCategory,
         },
         bricks: props.root_bricks
-          .map((i) => clone(i))
+          .map((i) => clone_brick(i))
           .map((i, idx) => update_path(i, [idx])),
       })
     );

@@ -1,7 +1,7 @@
 import { createAsyncThunk, createListenerMiddleware, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState, AppThunk } from '../app/store';
 import { Brick, BrickOutput, DragData, Offset } from '../types';
-import { clone, deep_clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id, update_path } from '../util';
+import { clone_brick, deep_clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id, update_path } from '../util';
 
 export interface BrickState {
   blocks_offset: Offset,
@@ -40,7 +40,13 @@ export const brickSlice = createSlice({
           categories: Object.keys(action.payload.toolbox.categories).reduce(
             (m, i) => {
               m[i] = action.payload.toolbox.categories[i].map((j, idx) =>
-                update_path(clone(j, true, false), [idx])
+                update_path(
+                  clone_brick(j, {
+                    remove_toolbox_flag: false,
+                    tail_relative_path: [],
+                  }),
+                  [idx]
+                )
               );
               return m;
             },
@@ -49,7 +55,7 @@ export const brickSlice = createSlice({
           activeCategory: action.payload.toolbox.activeCategory,
         },
         bricks: action.payload.bricks
-          .map((i) => clone(i))
+          .map((i) => clone_brick(i))
           .map((i, idx) => update_path(i, [idx])),
       };
     },
@@ -87,52 +93,57 @@ export const setBrickOffset = (
 
 export const move = (
   bricks: Brick[],
-  payload: { path: string[]; source: Brick; }
-): string[] => {
-  const brick = payload.source;
-  if (!payload.path.length) {
-    bricks.push(brick);
-    return [(bricks.length - 1).toString()];
-  } else {
-    const parent: Brick = payload.path.reduce((m, i) => m[i], bricks);
-    const t = parent.next;
-    parent.next = brick;
-    let tail = brick;
-    while (tail.next) tail = tail.next;
-    tail.next = t;
-
-    const source_idx = parseInt(payload.source.path[0]);
-    bricks.splice(source_idx, 1);
-    bricks.forEach((i, idx) => update_path(i, [idx]));
-    if (parseInt(payload.path[0]) > source_idx) {
-      return [
-        (parseInt(payload.path[0]) - 1).toString(),
-        ...payload.path.slice(1),
-        "next",
-      ];
-    }
-
-    return [...payload.path, "next"];
+  payload: {
+    target_path: string[];
+    source_path: string[];
+    tail_relative_path: string[];
   }
+): string[] => {
+  const target = payload.target_path.reduce((m, i) => m[i], bricks);
+  const brick = payload.source_path.reduce((m, i) => m[i], bricks);
+  const tail = payload.source_path
+    .concat(payload.tail_relative_path)
+    .reduce((m, i) => m[i], bricks);
+  brick.is_root = false;
+  brick.ui.offset = { x: 0, y: 0 };
+
+  const next = target.next;
+  target.next = brick;
+  tail.next = next;
+
+  const source_idx = parseInt(payload.source_path[0]);
+  bricks.splice(source_idx, 1);
+  bricks.forEach((i, idx) => update_path(i, [idx]));
+  if (parseInt(payload.target_path[0]) > source_idx) {
+    return [
+      (parseInt(payload.target_path[0]) - 1).toString(),
+      ...payload.target_path.slice(1),
+      "next",
+    ];
+  }
+
+  return [...payload.target_path, "next"];
   // TODO
 };
 
 export const detach = (
   bricks: Brick[],
-  payload: { path: string[]; offset: Offset },
+  payload: { path: string[]; offset: Offset; tail_relative_path: string[] }
 ): string[] => {
   const parent: Brick = payload.path
     .slice(0, -1)
     .reduce((m, i) => m[i], bricks);
-  const brick: Brick = payload.path.reduce(
-    (m, i) => m[i],
-    bricks
-  );
+  const brick: Brick = payload.path.reduce((m, i) => m[i], bricks);
+  const tail: Brick = payload.path.concat(payload.tail_relative_path).reduce((m, i) => m[i], bricks);
   const type = payload.path[payload.path.length - 1];
   if (type === "next") {
-    parent.next = null;
-    const new_brick = update_path(clone(brick), [bricks.length]);
+    parent.next = tail.next;
+    const new_brick = clone_brick(brick, {
+      remove_toolbox_flag: true,
+      tail_relative_path: payload.tail_relative_path,
+    });
     new_brick.ui.offset = payload.offset;
+    update_path(new_brick, [bricks.length]);
     bricks.push(new_brick);
   } else {
     // TODO

@@ -5,7 +5,7 @@ import operator from './operator';
 import procedure from './procedure';
 
 import {
-  clone,
+  clone_brick,
   for_each_brick,
   Brick,
 } from 'froggy';
@@ -36,7 +36,7 @@ const init_categories = (c: {[name: string]: Brick[]}) => {
     const bricks = c[category];
     const result = [];
     bricks.forEach(i => {
-      const brick = clone(i);
+      const brick = clone_brick(i);
       brick.ui.offset.y = brick.ui.show_hat ? (result.length === 0 ? 20 : 30) : 20;
       brick.is_root = true;
       for_each_brick(brick, undefined, j => j.ui.is_toolbox_brick = true);
