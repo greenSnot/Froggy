@@ -85,14 +85,9 @@ export const setBrickOffset = (
   brick.ui.offset = payload.offset;
 };
 
-export const removeRootBrickByIdx = (bricks: Brick[], payload: number) => {
-  bricks.splice(payload, 1);
-  bricks.forEach((i, idx) => update_path(i, [idx]));
-};
-
-export const insert = (
+export const move = (
   bricks: Brick[],
-  payload: { path: string[]; source: Brick }
+  payload: { path: string[]; source: Brick; }
 ): string[] => {
   const brick = payload.source;
   if (!payload.path.length) {
@@ -102,8 +97,22 @@ export const insert = (
     const parent: Brick = payload.path.reduce((m, i) => m[i], bricks);
     const t = parent.next;
     parent.next = brick;
-    brick.next = t;
-    return [...payload.path, 'next'];
+    let tail = brick;
+    while (tail.next) tail = tail.next;
+    tail.next = t;
+
+    const source_idx = parseInt(payload.source.path[0]);
+    bricks.splice(source_idx, 1);
+    bricks.forEach((i, idx) => update_path(i, [idx]));
+    if (parseInt(payload.path[0]) > source_idx) {
+      return [
+        (parseInt(payload.path[0]) - 1).toString(),
+        ...payload.path.slice(1),
+        "next",
+      ];
+    }
+
+    return [...payload.path, "next"];
   }
   // TODO
 };

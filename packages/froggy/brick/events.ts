@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { AppThunk } from "../app/store";
 import { Brick, BrickOutput, DragData, Offset } from "../types";
 import { clone, deep_clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id } from "../util";
-import { BrickState, detach, insert, removeRootBrickByIdx, selectAll, selectBlocksOffset, selectBricks, setBlocksOffset, setBrickOffset, setBricks } from "./brickSlice";
+import { BrickState, detach, move, selectAll, selectBlocksOffset, selectBricks, setBlocksOffset, setBrickOffset, setBricks } from "./brickSlice";
 
 export interface DragState {
   bricks?: Brick[];
@@ -65,6 +65,7 @@ const updateInsertingCandidates = (bricks: Brick[], path: string[]) => {
         if (
           (brick.inputs || (brick.parts && brick.parts.length > 1)) &&
           brick !== current &&
+          (current.is_root ? brick.path[0] !== current.path[0] : true) &&
           brick.next !== undefined
         ) {
           const ele = document.getElementById(to_id(brick.path, "workspace"));
@@ -72,7 +73,7 @@ const updateInsertingCandidates = (bricks: Brick[], path: string[]) => {
           if (brick.path[brick.path.length - 2] == "parts") {
             offset.x += 15;
           }
-          if (brick.inputs) {
+          if (brick.inputs && brick.inputs.length) {
             offset.y += document.querySelector(
               `#${to_id(brick.path, "workspace")} > .inputs`
             ).clientHeight;
@@ -146,7 +147,7 @@ export function useBrickEvents(
           new_brick.ui.offset = offset;
           drag_state.brick_offset_x = offset.x;
           drag_state.brick_offset_y = offset.y;
-          drag_state.brick_path = insert(bricks, { path: [], source: new_brick });
+          drag_state.brick_path = move(bricks, { path: [], source: new_brick });
         } else if (brick.is_root) {
           drag_state.is_dragging = true;
         } else if (distance_2d(x1, y1, x2, y2) >= detach_distance) {
@@ -188,13 +189,16 @@ export function useBrickEvents(
           const new_brick = clone(brick);
           new_brick.is_root = false;
           new_brick.ui.offset = { x: 0, y: 0 };
-          const new_path = insert(bricks, {
+          const new_path = move(bricks, {
             path: target.path,
             source: new_brick,
           });
-          removeRootBrickByIdx(bricks, parseInt(drag_state.brick_path[0]));
           drag_state.brick_path = new_path;
           drag_state.is_dragging = false;
+
+          // drag_state.drag_start_global_x = insert_target.offset.x - drag_state.bricks_offset_x;
+          // drag_state.drag_start_global_y = insert_target.offset.y - drag_state.bricks_offset_y;
+
           const tail: Brick = drag_state.brick_path
             .concat(drag_state.tail_relative_path)
             .reduce((m, i) => m[i], bricks);
