@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { AppThunk } from "../app/store";
 import { AtomicBrickEnum, Brick, BrickOutput, DragData, Offset } from "../types";
-import { clone_brick, deep_clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id } from "../util";
+import { clone_brick, compute_text_size, deep_clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id } from "../util";
 import { BrickState, detach, move, selectAll, selectBlocksOffset, selectBricks, setBlocksOffset, setBrickOffset, setBricks } from "./brickSlice";
 
 export interface DragState {
@@ -72,9 +72,6 @@ const updateInsertingCandidates = (bricks: Brick[], path: string[]) => {
       // TODO
       let inputs = (brick.inputs || []);
       function get_input_size(input: Brick) {
-        if (AtomicBrickEnum[input.type]) {
-        }
-
       }
       // TODO
       function dfs(inputs: Brick[]) {

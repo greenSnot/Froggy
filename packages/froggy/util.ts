@@ -145,3 +145,26 @@ export function update_path(brick: Brick, default_path = []) {
   s(brick, default_path);
   return brick;
 }
+
+export function compute_text_size(
+  text: string,
+  options = {
+    style: '',
+  },
+) {
+  const e = document.createElement('span');
+  e.innerText = text;
+  e.setAttribute(
+    'style',
+    'position:absolute;top:100%;word-break:break-all;white-space:nowrap;' +
+      options.style,
+  );
+  document.body.appendChild(e);
+  let text_width = Math.max(e.offsetWidth, 19);
+  const size = {
+    w: text_width,
+    h: Math.max(e.offsetHeight, 19),
+  };
+  document.body.removeChild(e);
+  return size;
+}
