@@ -2,7 +2,7 @@ import { createListenerMiddleware } from "@reduxjs/toolkit";
 import React, { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { AppThunk } from "../app/store";
-import { Brick, BrickOutput, DragData, Offset } from "../types";
+import { AtomicBrickEnum, Brick, BrickOutput, DragData, Offset } from "../types";
 import { clone_brick, deep_clone, distance_2d, for_each_brick, get_global_offset, get_id, is_container, to_id } from "../util";
 import { BrickState, detach, move, selectAll, selectBlocksOffset, selectBricks, setBlocksOffset, setBrickOffset, setBricks } from "./brickSlice";
 
@@ -33,69 +33,71 @@ const updateInsertingCandidates = (bricks: Brick[], path: string[]) => {
     return;
   }
   if (current.output) {
-    bricks.forEach((i) =>
-      for_each_brick(i, undefined, (brick) => {
-        if (brick === current || brick.is_static) {
-          return;
-        }
-        if (
+    bricks.forEach((i) => for_each_brick(i, undefined, (brick) => {}));
+    return;
+  }
+  bricks.forEach((i) => {
+    const for_each_child_brick = (
+      brick: Brick,
+      x: number,
+      y: number
+    ): Offset & {
+      w: number;
+      h: number;
+    } => {
+
+      if (
+        (current.output &&
+          !brick.is_static &&
           is_container(brick) &&
           (brick.output === current.output ||
             brick.output === BrickOutput.any ||
-            current.output === BrickOutput.any)
-        ) {
-          const offset = get_global_offset(
-            document.getElementById(to_id(brick.path, "workspace"))
-          );
-
-          drag_state.inserting_candidates.push({
-            path: brick.path,
-            offset,
-          });
-        }
-      })
-    );
-    return;
-  }
-  bricks.forEach((i) =>
-    for_each_brick(
-      i,
-      undefined,
-      (brick) => {
-        if (
+            current.output === BrickOutput.any)) ||
+        (!current.output &&
           (brick.inputs || (brick.parts && brick.parts.length > 1)) &&
           brick !== current &&
           (current.is_root ? brick.path[0] !== current.path[0] : true) &&
-          brick.next !== undefined
-        ) {
-          const ele = document.getElementById(to_id(brick.path, "workspace"));
-          const offset = get_global_offset(ele);
-          if (brick.path[brick.path.length - 2] == "parts") {
-            offset.x += 15;
-          }
-          if (brick.inputs && brick.inputs.length) {
-            offset.y += document.querySelector(
-              `#${to_id(brick.path, "workspace")} > .inputs`
-            ).clientHeight;
-          } else if (brick.parts) {
-            offset.y += document.querySelector(
-              `#${to_id(brick.path, "workspace")} > .parts`
-            ).clientHeight;
-          }
-
-          drag_state.inserting_candidates.push({
-            path: brick.path,
-            offset,
-          });
-        }
-      },
-      {
-        inputs: false,
-        parts: true,
-        next: true,
+          brick.next !== undefined)
+      ) {
+        drag_state.inserting_candidates.push({
+          path: brick.path,
+          offset: { x, y },
+        });
       }
-    )
-  );
+
+      if (brick.path[brick.path.length - 2] == "parts") {
+        x += 15;
+      }
+
+      // TODO
+      let inputs = (brick.inputs || []);
+      function get_input_size(input: Brick) {
+        if (AtomicBrickEnum[input.type]) {
+        }
+
+      }
+      // TODO
+      function dfs(inputs: Brick[]) {
+        if (!inputs) {
+          return;
+        }
+
+      }
+      const inputs_size = (brick.inputs || []).map((i) => for_each_child_brick(i, x, y));
+      const parts_size = (brick.parts || []).map((i) => for_each_child_brick(i, x, y));
+
+      if (brick.inputs && brick.inputs.length) {
+        y += 32; // TODO inputs height
+      } else if (brick.parts) {
+        y += 1; // TODO parts height
+      }
+      for_each_child_brick(brick.next, x, y);
+
+      // TODO
+      return {x, y, w: 0, h: 0}
+    };
+    for_each_child_brick(i, i.ui.offset.x, i.ui.offset.y);
+  });
 };
 
 export function useBrickEvents(
@@ -165,7 +167,11 @@ export function useBrickEvents(
           console.log('detach')
           drag_state.brick_path = detach(bricks, { path: brick.path!, tail_relative_path: drag_state.tail_relative_path, offset });
         }
-        updateInsertingCandidates(bricks, drag_state.brick_path);
+        drag_state.inserting_candidates = [];
+        setTimeout(() => {
+        updateInsertingCandidates(drag_state.bricks, drag_state.brick_path)
+        }, 400
+        )
       } else {
         const new_offset: Offset = {
           x: drag_state.brick_offset_x + x1 - x2,
@@ -207,6 +213,7 @@ export function useBrickEvents(
           );
 
           for_each_brick(new_brick, tail, (b) => (b.ui.is_ghost = true));
+          drag_state.inserting_candidates = [];
         }
       }
       dispatch(setBricks(bricks));

@@ -134,9 +134,11 @@ export const detach = (
     .slice(0, -1)
     .reduce((m, i) => m[i], bricks);
   const brick: Brick = payload.path.reduce((m, i) => m[i], bricks);
-  const tail: Brick = payload.path.concat(payload.tail_relative_path).reduce((m, i) => m[i], bricks);
+  const tail: Brick = payload.path
+    .concat(payload.tail_relative_path)
+    .reduce((m, i) => m[i], bricks);
   const type = payload.path[payload.path.length - 1];
-  if (type === "next") {
+  if (payload.path[payload.path.length - 1] === "next") {
     parent.next = tail.next;
     const new_brick = clone_brick(brick, {
       remove_toolbox_flag: true,
